@@ -1,4 +1,4 @@
-package com.lykke.trade.volume.monitoring.spring
+package com.lykke.trade.volume.monitoring.service.spring
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

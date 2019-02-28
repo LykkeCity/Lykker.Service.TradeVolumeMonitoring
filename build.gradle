@@ -4,7 +4,11 @@ plugins {
 	id 'org.jetbrains.kotlin.plugin.spring' version '1.2.71'
 }
 
+apply plugin: 'kotlin'
+apply plugin: 'kotlin-spring'
+apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: "application"
 
 group = 'com.lykke'
 version = '0.0.1'
@@ -17,6 +21,7 @@ repositories {
 ext {
 	springfox_swagger2 = "2.9.2"
 	springfox_swagger_ui = "2.9.2"
+	lmax_disruptor_version = '3.4.2'
 }
 
 configurations {
@@ -29,6 +34,7 @@ dependencies {
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 	compile("org.springframework.boot:spring-boot-starter-log4j2")
+	compile "com.lmax:disruptor:$lmax_disruptor_version"
 
 	compile "io.springfox:springfox-swagger2:$springfox_swagger2"
 	compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
@@ -43,9 +49,19 @@ compileKotlin {
 	}
 }
 
+bootDistZip {
+	archiveName "${project.name}-${project.version}.zip"
+	into("${project.name}-${project.version}.zip") {
+		from "${rootProject.projectDir}/src/dist"
+	}
+}
+
 compileTestKotlin {
 	kotlinOptions {
 		freeCompilerArgs = ['-Xjsr305=strict']
 		jvmTarget = '1.8'
 	}
 }
+
+mainClassName = "com.lykke.trade.volume.monitoring.service.ApplicationKt"
+distTar.enabled = false

@@ -1,4 +1,4 @@
-package com.lykke.trade.volume.monitoring
+package com.lykke.trade.volume.monitoring.service
 
 import org.junit.Test
 import org.junit.runner.RunWith

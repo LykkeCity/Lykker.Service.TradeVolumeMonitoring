@@ -1,4 +1,4 @@
-package com.lykke.trade.volume.monitoring
+package com.lykke.trade.volume.monitoring.service
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
