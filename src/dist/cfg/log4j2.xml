@@ -18,17 +18,22 @@
         </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
-        <AsyncRoot level="debug" additivity="false">
-            <AppenderRef ref="ConsoleLog"/>
+        <AsyncRoot level="info" additivity="false">
+            <AppenderRef ref="ServerLog"/>
         </AsyncRoot>
 
-        <AsyncLogger name ="com.lykke.trade.volume.monitoring.service" level="info">
+        #Springfox logs
+        <AsyncLogger name="springfox.documentation.spring.web" level="info"
+                     additivity="false">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="ConsoleLog"/>
         </AsyncLogger>
 
-        <AsyncLogger name ="org.apache.http" level="info">
-        </AsyncLogger>
-
-        <AsyncLogger name = "org.springframework" level="info">
+        @Spring framework logs
+        <AsyncLogger name="org.springframework" level="info"
+                     additivity="false">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="ConsoleLog"/>
         </AsyncLogger>
     </Loggers>
 </Configuration>

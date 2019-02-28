@@ -7,17 +7,11 @@
         </Console>
     </Appenders>
     <Loggers>
-        <AsyncRoot level="debug" additivity="false">
+        <AsyncRoot level="info" additivity="false">
             <AppenderRef ref="ConsoleLog"/>
         </AsyncRoot>
 
-        <AsyncLogger name ="com.lykke.trade.volume.monitoring.service" level="info">
-        </AsyncLogger>
-
-        <AsyncLogger name ="org.apache.http" level="info">
-        </AsyncLogger>
-
-        <AsyncLogger name = "org.springframework" level="info">
+        <AsyncLogger name ="com.lykke.trade.volume.monitoring.service" level="debug">
         </AsyncLogger>
     </Loggers>
 </Configuration>
