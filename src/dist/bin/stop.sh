@@ -1,5 +1,5 @@
 #!/bin/bash
-# (c) lykke.com, 2016. All rights reserved.
+# (c) lykke.com, 2019. All rights reserved.
 
 for pid in `pgrep -f MeTestClientService`; do
 echo -n "Killing process "
