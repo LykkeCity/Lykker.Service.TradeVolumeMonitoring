@@ -1,7 +1,7 @@
 #!/bin/bash
 # (c) lykke.com, 2019. All rights reserved.
 
-for pid in `pgrep -f MeTestClientService`; do
+for pid in `pgrep -f TradeVolumeMonitoringService`; do
 echo -n "Killing process "
 echo $pid
 kill $pid
@@ -15,7 +15,7 @@ while true;
 do
   retry_count=`expr $retry_count + 1`
 
-  for pid in `pgrep -f MeTestClientService`; do
+  for pid in `pgrep -f TradeVolumeMonitoringService`; do
       if kill -0 $pid ; then
         one_exist=1
       fi
@@ -38,7 +38,7 @@ do
   one_exist=0
 done
 
-for pid in `pgrep -f MeTestClientService`; do
+for pid in `pgrep -f TradeVolumeMonitoringService`; do
   echo -n "Killing process "
   echo -n $pid
   echo " with nosignal"
