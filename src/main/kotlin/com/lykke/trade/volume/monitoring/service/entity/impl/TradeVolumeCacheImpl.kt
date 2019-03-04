@@ -12,7 +12,6 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
 
     private val tradeVolumesByAssetIdByWalletId = HashMap<String, HashMap<String, MutableList<Volume>>>()
     private val tradeVolumeForPeriodByAssetIdByWalletId = HashMap<String, HashMap<String, BigDecimal>>()
-    private val recalculationsByAssetIdByWalletId = HashMap<String, HashMap<String, Long>>()
 
     override fun add(walletId: String,
                      assetId: String,
@@ -35,7 +34,6 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
     override fun clear() {
         tradeVolumesByAssetIdByWalletId.clear()
         tradeVolumeForPeriodByAssetIdByWalletId.clear()
-        recalculationsByAssetIdByWalletId.clear()
     }
 
     private fun removeOldVolumes(walletId: String, assetId: String) {
@@ -74,7 +72,6 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
                                            volumeDelta: BigDecimal): BigDecimal {
         val resultVolume = getVolume(walletId, assetId).add(volumeDelta)
         setVolume(walletId = walletId, assetId = assetId, volume = resultVolume)
-        incrementRecalculationsCount(walletId = walletId, assetId =  assetId)
         return resultVolume
     }
 
@@ -92,28 +89,6 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
 
     private fun setVolume(walletId: String, assetId: String, volume: BigDecimal) {
         tradeVolumeForPeriodByAssetIdByWalletId.getOrPut(walletId) { HashMap() }[assetId] = volume
-    }
-
-    private fun getRecalculationsCount(walletId: String, assetId: String): Long {
-        return recalculationsByAssetIdByWalletId.getOrPut(walletId) { HashMap() }.getOrPut(assetId) { 0L }
-    }
-
-    private fun incrementRecalculationsCount(walletId: String, assetId: String) {
-        recalculationsByAssetIdByWalletId.getOrPut(walletId) { HashMap() }[assetId] = getRecalculationsCount(walletId, assetId) + 1
-    }
-
-    private fun clearRecalucationscount(walletId: String, assetId: String) {
-        recalculationsByAssetIdByWalletId.getOrPut(walletId) { HashMap() }.remove(assetId)
-    }
-
-
-    private fun performFullTradeVolumeRecalculation(walletId: String, assetId: String): BigDecimal {
-        val result = BigDecimal.ZERO
-
-        getVolumes(walletId, assetId)
-                .forEach { result.add(it.volume) }
-
-        return result
     }
 
     private fun isExpired(date: Date): Boolean {
