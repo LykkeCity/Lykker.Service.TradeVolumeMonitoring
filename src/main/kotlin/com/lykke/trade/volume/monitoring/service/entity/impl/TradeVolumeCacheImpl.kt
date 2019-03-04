@@ -17,11 +17,12 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
                      assetId: String,
                      volume: BigDecimal,
                      timestamp: Date): BigDecimal {
+        removeOldVolumes(walletId, assetId)
+
         if (isExpired(timestamp)) {
             return getVolume(walletId = walletId, assetId = assetId)
         }
 
-        removeOldVolumes(walletId, assetId)
         getVolumes(walletId, assetId).add(Volume(timestamp, volume))
         return performVolumeRecalculation(walletId = walletId, assetId = assetId, volumeDelta = volume)
     }
@@ -47,6 +48,7 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
 
         val oldItemsBound = Date().time - tradeVolumeConfig.tradeVolumeCacheConfig.expiryPeriod
         var removedVolumesSum = BigDecimal.ZERO
+
         var currentVolume: Volume? = if (volumesIterator.hasNext()) {
             volumesIterator.next()
         } else null
