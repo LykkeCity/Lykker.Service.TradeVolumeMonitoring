@@ -1,8 +1,7 @@
-package com.lykke.matching.engine.config
+package com.lykke.trade.volume.monitoring.service.config
 
-import com.google.gson.FieldNamingPolicy.UPPER_CAMEL_CASE
+import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.FactoryBean
@@ -12,12 +11,12 @@ import org.springframework.stereotype.Component
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
+import javax.annotation.PostConstruct
 import javax.naming.ConfigurationException
 
 @Component("Config")
 @Profile("default", "!local_config")
-class HttpConfigParser(private val environment: Environment) : FactoryBean<TradeVolumeConfig> {
-
+class HttpConfigParser(private val environment: Environment): FactoryBean<TradeVolumeConfig> {
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger("AppStarter")
     }
@@ -57,12 +56,17 @@ class HttpConfigParser(private val environment: Environment) : FactoryBean<Trade
 
             inputStream.close()
 
-            val gson = GsonBuilder().setFieldNamingPolicy(UPPER_CAMEL_CASE).create()
+            val gson = GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE).create()
             return gson.fromJson(response.toString(), TradeVolumeConfig::class.java)
         } catch (e: Exception) {
             throw ConfigurationException("Unable to read config from $httpString: ${e.message}")
         } finally {
             inputStream.close()
         }
+    }
+
+    @PostConstruct
+    fun test() {
+        println("asdf")
     }
 }
