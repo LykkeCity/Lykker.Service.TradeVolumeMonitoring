@@ -1,0 +1,17 @@
+<Configuration>
+    <Appenders>
+        <Console name="ConsoleLog">
+            <PatternLayout>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
+            </PatternLayout>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <AsyncRoot level="info" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </AsyncRoot>
+
+        <AsyncLogger name ="com.lykke.trade.volume.monitoring.service" level="debug">
+        </AsyncLogger>
+    </Loggers>
+</Configuration>
