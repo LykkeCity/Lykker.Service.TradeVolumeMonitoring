@@ -1,6 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
+import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
@@ -16,9 +16,9 @@ open class ApplicationConfig {
     }
 
     @Bean
-    open fun config(environment: Environment): TradeVolumeConfig? {
+    open fun config(environment: Environment): Config? {
         if (environment.acceptsProfiles(Profiles.of("local_config"))) {
-            return ConfigInitializer.initConfig("local", classOfT = TradeVolumeConfig::class.java)
+            return ConfigInitializer.initConfig("local", classOfT = Config::class.java)
         }
 
         return if(environment.acceptsProfiles(Profiles.of("default"))) {
@@ -28,7 +28,7 @@ open class ApplicationConfig {
                 LOGGER.error(errorMessage)
                 throw IllegalArgumentException(errorMessage)
             }
-            ConfigInitializer.initConfig(commandLineArgs[0], classOfT = TradeVolumeConfig::class.java)
+            ConfigInitializer.initConfig(commandLineArgs[0], classOfT = Config::class.java)
         } else {
             null
         }
