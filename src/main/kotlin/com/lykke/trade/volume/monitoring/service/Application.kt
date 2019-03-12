@@ -7,13 +7,13 @@ import org.springframework.boot.runApplication
 @SpringBootApplication
 class Application
 
-private val LOGGER = LoggerFactory.getLogger(Application::class.java.name)
+private val LOGGER = LoggerFactory.getLogger("AppStarter")
 
 fun main(args: Array<String>) {
     try {
         runApplication<Application>(*args)
-    } catch (e: Exception) {
-        LOGGER.error(e.message ?: "Unable to start app", e)
+    } catch (e: Throwable) {
+        LOGGER.error("Unable to start app: ${e.message}" , e)
         System.exit(1)
     }
 }

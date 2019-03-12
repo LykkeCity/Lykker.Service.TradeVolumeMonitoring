@@ -22,7 +22,7 @@
                                  fileName="../log/incomingEventProcess.log"
                                  immediateFlush="true">
             <PatternLayout>
-                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%c{1}] %m%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
@@ -34,9 +34,14 @@
             <AppenderRef ref="ServerLog"/>
         </AsyncRoot>
 
-        <AsyncRoot level="debug" additivity="false">
+        <AsyncLogger name="com.lykke.trade.volume.monitoring.service.process" level="debug" additivity="false">
             <AppenderRef ref="IncomingEventProcessLog"/>
-        </AsyncRoot>
+        </AsyncLogger>
+
+        <Logger name="AppStarter" additivity="false">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="ConsoleLog"/>
+        </Logger>
 
         #Springfox logs
         <AsyncLogger name="springfox.documentation.spring.web" level="info"

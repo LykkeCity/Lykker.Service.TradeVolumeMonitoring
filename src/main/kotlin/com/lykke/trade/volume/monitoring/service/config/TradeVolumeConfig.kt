@@ -5,4 +5,5 @@ import com.lykke.me.subscriber.config.RabbitMqConfig
 class TradeVolumeConfig(val tradeVolumeCacheConfig: TradeVolumeCacheConfig,
                         val maxTradeVolume: Long,
                         val assetId: String,
-                        val matchingEngineRabbitMqConfigs: Set<RabbitMqConfig>)
+                        val matchingEngineRabbitMqConfigs: Set<RabbitMqConfig>,
+                        val db: DbConfig)

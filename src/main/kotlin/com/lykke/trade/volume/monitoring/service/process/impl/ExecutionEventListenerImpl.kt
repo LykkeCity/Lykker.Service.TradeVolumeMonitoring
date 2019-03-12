@@ -17,7 +17,7 @@ class ExecutionEventListenerImpl(private val inputQueue: BlockingQueue<Execution
     }
 
     override fun startProcessingExecutionEvents() {
-        thread(name = "EventProcessing") {
+        thread(name = "${ExecutionEventListenerImpl::class.java.name}.EventProcessing") {
             while (true) {
                 try {
                     processEvent(inputQueue.take())
