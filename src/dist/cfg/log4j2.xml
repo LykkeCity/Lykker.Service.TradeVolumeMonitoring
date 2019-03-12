@@ -16,10 +16,26 @@
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
         </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="IncomingEventProcessLog"
+                                 filePattern="../log/incomingEventProcess.log.%d{yyyy-MM-dd}"
+                                 fileName="../log/incomingEventProcess.log"
+                                 immediateFlush="true">
+            <PatternLayout>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <AsyncRoot level="info" additivity="false">
             <AppenderRef ref="ServerLog"/>
+        </AsyncRoot>
+
+        <AsyncRoot level="debug" additivity="false">
+            <AppenderRef ref="IncomingEventProcessLog"/>
         </AsyncRoot>
 
         #Springfox logs
