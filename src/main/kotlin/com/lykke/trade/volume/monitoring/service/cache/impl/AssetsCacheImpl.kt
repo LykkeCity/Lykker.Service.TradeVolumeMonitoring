@@ -17,9 +17,9 @@ class AssetsCacheImpl(private val loader: AssetsLoader,
     override fun getAsset(assetId: String): Asset? {
         var asset = assetsById[assetId]
         if (asset == null) {
-            asset = loader.loadAsset(assetId)?.let {
-                assetsById[assetId] = it
-                it
+            asset = loader.loadAsset(assetId)
+            if (asset != null) {
+                assetsById[assetId] = asset
             }
         }
         return asset

@@ -26,12 +26,12 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
             return
         }
 
-        val assetPairsByPairKey = generateAssetPairsByPairKeyMap(assetPairsById)
+        val assetPairsByPairKey = convertToAssetPairsByPairKeyMap(assetPairsById)
         this.assetPairsByPairKey = assetPairsByPairKey
         LOGGER.debug("Loaded ${assetPairsById.size} asset pairs (grouped by pair key: ${assetPairsByPairKey.size})")
     }
 
-    private fun generateAssetPairsByPairKeyMap(assetPairsById: Map<String, AssetPair>): Map<String, AssetPair> {
+    private fun convertToAssetPairsByPairKeyMap(assetPairsById: Map<String, AssetPair>): Map<String, AssetPair> {
         return assetPairsById.values
                 .groupBy { pairKey(it.baseAssetId, it.quotingAssetId) }
                 .mapValues {

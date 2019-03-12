@@ -7,10 +7,13 @@ import com.lykke.trade.volume.monitoring.service.cache.AssetPairsCache
 import com.lykke.trade.volume.monitoring.service.cache.AssetsCache
 import com.lykke.trade.volume.monitoring.service.cache.CacheUpdater
 import com.lykke.trade.volume.monitoring.service.cache.DataCache
+import com.lykke.trade.volume.monitoring.service.cache.PricesCache
 import com.lykke.trade.volume.monitoring.service.cache.impl.AssetPairsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.AssetsCacheImpl
+import com.lykke.trade.volume.monitoring.service.cache.impl.PricesCacheImpl
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
+import com.lykke.trade.volume.monitoring.service.entity.Rate
 import com.lykke.trade.volume.monitoring.service.holder.AssetPairsHolder
 import com.lykke.trade.volume.monitoring.service.holder.AssetsHolder
 import com.lykke.trade.volume.monitoring.service.holder.PricesHolder
@@ -19,6 +22,7 @@ import com.lykke.trade.volume.monitoring.service.holder.impl.AssetsHolderImpl
 import com.lykke.trade.volume.monitoring.service.holder.impl.PricesHolderImpl
 import com.lykke.trade.volume.monitoring.service.loader.AssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
+import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
@@ -37,6 +41,7 @@ import com.lykke.utils.notification.Listener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.math.BigDecimal
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -60,6 +65,21 @@ class IncomingEventProcessConfig {
     }
 
     @Bean
+    fun ratesLoader(): RatesLoader {
+        // todo
+        return object : RatesLoader {
+            override fun loadRatesByAssetPairIdMap(): Map<String, Rate> {
+                return emptyMap()
+            }
+
+            override fun loadRate(assetPairId: String): Rate? {
+                return null
+            }
+
+        }
+    }
+
+    @Bean
     fun assetsCache(assetsLoader: AssetsLoader,
                     @Value("\${application.assets.cache.update.interval}")
                     updateInterval: Long): AssetsCache {
@@ -71,6 +91,13 @@ class IncomingEventProcessConfig {
                         @Value("\${application.assetpairs.cache.update.interval}")
                         updateInterval: Long): AssetPairsCacheImpl {
         return AssetPairsCacheImpl(assetPairsLoader, updateInterval)
+    }
+
+    @Bean
+    fun pricesCache(ratesLoader: RatesLoader,
+                    @Value("\${application.rates.cache.update.interval}")
+                    updateInterval: Long): PricesCache {
+        return PricesCacheImpl(ratesLoader, updateInterval)
     }
 
     @Bean(initMethod = "start")
@@ -89,8 +116,8 @@ class IncomingEventProcessConfig {
     }
 
     @Bean
-    fun pricesHolder(): PricesHolder {
-        return PricesHolderImpl()
+    fun pricesHolder(pricesCache: PricesCache): PricesHolder {
+        return PricesHolderImpl(pricesCache)
     }
 
     @Bean(initMethod = "start")

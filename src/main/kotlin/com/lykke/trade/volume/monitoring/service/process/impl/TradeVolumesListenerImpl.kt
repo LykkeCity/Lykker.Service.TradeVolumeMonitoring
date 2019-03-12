@@ -15,7 +15,7 @@ class TradeVolumesListenerImpl(private val inputQueue: BlockingQueue<EventTradeV
     }
 
     override fun startProcessingTradeVolumes() {
-        thread(name = "${TradeVolumesListenerImpl::class.java.name}.TradeVolumesProcessing") {
+        thread(name = "TradeVolumesProcessingThread") {
             while (true) {
                 try {
                     processTradeVolumes(inputQueue.take())

@@ -22,7 +22,7 @@
                                  fileName="../log/incomingEventProcess.log"
                                  immediateFlush="true">
             <PatternLayout>
-                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%c{1}] %m%n</Pattern>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>

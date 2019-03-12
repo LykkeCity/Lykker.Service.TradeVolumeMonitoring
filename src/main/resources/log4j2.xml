@@ -2,7 +2,7 @@
     <Appenders>
         <Console name="ConsoleLog">
             <PatternLayout>
-                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%c{1}] %m%n</Pattern>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
             </PatternLayout>
         </Console>
     </Appenders>
