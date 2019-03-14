@@ -12,6 +12,7 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
         private val LOGGER = ThrottlingLogger.getLogger(AssetPairsCacheImpl::class.java.name)
     }
 
+    @Volatile
     private var assetPairsByPairKey: Map<String, AssetPair> = emptyMap()
 
     override fun getAssetPair(assetId1: String, assetId2: String): AssetPair? {
@@ -33,7 +34,12 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
 
     private fun convertToAssetPairsByPairKeyMap(assetPairsById: Map<String, AssetPair>): Map<String, AssetPair> {
         return assetPairsById.values
-                .groupBy { pairKey(it.baseAssetId, it.quotingAssetId) }
+                .groupBy {
+                    if (it.baseAssetId > it.quotingAssetId)
+                        pairKey(it.baseAssetId, it.quotingAssetId)
+                    else
+                        pairKey(it.quotingAssetId, it.baseAssetId)
+                }
                 .mapValues {
                     if (it.value.size > 1) {
                         LOGGER.error("There are more than 1 asset pair for baseAssetId=${it.value.first().baseAssetId} " +

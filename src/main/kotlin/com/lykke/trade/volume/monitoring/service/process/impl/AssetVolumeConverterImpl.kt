@@ -13,6 +13,9 @@ class AssetVolumeConverterImpl(private val assetsHolder: AssetsHolder,
                                private val pricesHolder: PricesHolder) : AssetVolumeConverter {
 
     override fun convert(assetId: String, volume: BigDecimal, targetAssetId: String): BigDecimal {
+        if (assetId == targetAssetId) {
+            return volume
+        }
         val targetAsset = assetsHolder.getAsset(targetAssetId)
                 ?: throw ApplicationException("Unknown asset $targetAssetId")
 

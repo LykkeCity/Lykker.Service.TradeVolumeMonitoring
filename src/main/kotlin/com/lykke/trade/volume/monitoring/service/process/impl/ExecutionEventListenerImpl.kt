@@ -8,7 +8,8 @@ import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
 import java.util.concurrent.BlockingQueue
 import kotlin.concurrent.thread
 
-class ExecutionEventListenerImpl(private val inputQueue: BlockingQueue<ExecutionEvent>,
+class ExecutionEventListenerImpl(private val id: Long,
+                                 private val inputQueue: BlockingQueue<ExecutionEvent>,
                                  private val processor: ExecutionEventProcessor,
                                  private val outputQueue: BlockingQueue<EventTradeVolumesWrapper>) : ExecutionEventListener {
 
@@ -17,7 +18,7 @@ class ExecutionEventListenerImpl(private val inputQueue: BlockingQueue<Execution
     }
 
     override fun startProcessingExecutionEvents() {
-        thread(name = "EventProcessingThread") {
+        thread(name = "EventProcessingThread-$id") {
             while (true) {
                 try {
                     processEvent(inputQueue.take())
@@ -26,7 +27,7 @@ class ExecutionEventListenerImpl(private val inputQueue: BlockingQueue<Execution
                 }
             }
         }
-        LOGGER.info("", "Started")
+        LOGGER.info("", "Started, id: $id")
     }
 
     private fun processEvent(event: ExecutionEvent) {

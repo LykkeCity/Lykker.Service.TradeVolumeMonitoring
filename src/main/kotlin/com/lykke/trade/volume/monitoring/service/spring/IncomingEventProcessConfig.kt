@@ -13,7 +13,6 @@ import com.lykke.trade.volume.monitoring.service.cache.impl.AssetsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.PricesCacheImpl
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.Rate
 import com.lykke.trade.volume.monitoring.service.holder.AssetPairsHolder
 import com.lykke.trade.volume.monitoring.service.holder.AssetsHolder
 import com.lykke.trade.volume.monitoring.service.holder.PricesHolder
@@ -25,11 +24,10 @@ import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
+import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesGeneratedLoader
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
-import com.lykke.trade.volume.monitoring.service.process.ExecutionEventListener
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
 import com.lykke.trade.volume.monitoring.service.process.MatchingEngineEventSubscriber
-import com.lykke.trade.volume.monitoring.service.process.TradeVolumesListener
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
 import com.lykke.trade.volume.monitoring.service.process.impl.AssetVolumeConverterImpl
 import com.lykke.trade.volume.monitoring.service.process.impl.ExecutionEventListenerImpl
@@ -39,14 +37,18 @@ import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesListen
 import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesProcessorImpl
 import com.lykke.utils.notification.Listener
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
+import org.springframework.beans.factory.config.ConstructorArgumentValues
+import org.springframework.beans.factory.support.DefaultListableBeanFactory
+import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.math.BigDecimal
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
 @Configuration
-class IncomingEventProcessConfig {
+class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
     @Bean
     fun executionEventQueue(): BlockingQueue<ExecutionEvent> = LinkedBlockingQueue<ExecutionEvent>()
@@ -65,18 +67,8 @@ class IncomingEventProcessConfig {
     }
 
     @Bean
-    fun ratesLoader(): RatesLoader {
-        // todo
-        return object : RatesLoader {
-            override fun loadRatesByAssetPairIdMap(): Map<String, Rate> {
-                return emptyMap()
-            }
-
-            override fun loadRate(assetPairId: String): Rate? {
-                return null
-            }
-
-        }
+    fun ratesLoader(config: Config): RatesLoader {
+        return PublicApiRatesGeneratedLoader(config.tradeVolumeConfig.publicApiUrl)
     }
 
     @Bean
@@ -132,25 +124,9 @@ class IncomingEventProcessConfig {
                 executionEventQueue)
     }
 
-    @Bean(initMethod = "startProcessingExecutionEvents")
-    fun executionEventListener(executionEventQueue: BlockingQueue<ExecutionEvent>,
-                               executionEventProcessor: ExecutionEventProcessor,
-                               tradeVolumesQueue: BlockingQueue<EventTradeVolumesWrapper>): ExecutionEventListener {
-        return ExecutionEventListenerImpl(executionEventQueue,
-                executionEventProcessor,
-                tradeVolumesQueue)
-    }
-
     @Bean
     fun executionEventProcessor(): ExecutionEventProcessor {
         return ProtoExecutionEventProcessor()
-    }
-
-    @Bean(initMethod = "startProcessingTradeVolumes")
-    fun tradeVolumesListener(tradeVolumesQueue: BlockingQueue<EventTradeVolumesWrapper>,
-                             tradeVolumesProcessor: TradeVolumesProcessor): TradeVolumesListener {
-        return TradeVolumesListenerImpl(tradeVolumesQueue,
-                tradeVolumesProcessor)
     }
 
     @Bean
@@ -167,6 +143,49 @@ class IncomingEventProcessConfig {
         return AssetVolumeConverterImpl(assetsHolder,
                 assetPairsHolder,
                 pricesHolder)
+    }
+
+    override fun postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory) {
+        val threadsNumber = beanFactory.getBean(Config::class.java).tradeVolumeConfig.threadsNumber
+        if (threadsNumber <= 0) {
+            throw IllegalStateException("configuration value 'threadsNumber' must be positive, actual value: $threadsNumber")
+        }
+        registerExecutionEventListeners(threadsNumber, beanFactory as DefaultListableBeanFactory)
+        registerTradeVolumesListeners(threadsNumber, beanFactory)
+    }
+
+    private fun registerExecutionEventListeners(number: Int, factory: DefaultListableBeanFactory) {
+        (1..number).forEach {
+            registerExecutionEventListener(it, factory)
+        }
+    }
+
+    private fun registerExecutionEventListener(index: Int, factory: DefaultListableBeanFactory) {
+        val beanDefinition = RootBeanDefinition(ExecutionEventListenerImpl::class.java)
+        beanDefinition.initMethodName = ExecutionEventListenerImpl::startProcessingExecutionEvents.name
+
+        val constructorArgumentValues = ConstructorArgumentValues()
+        constructorArgumentValues.addIndexedArgumentValue(0, index)
+
+        beanDefinition.constructorArgumentValues = constructorArgumentValues
+        factory.registerBeanDefinition("executionEventListener$index", beanDefinition)
+    }
+
+    private fun registerTradeVolumesListeners(number: Int, factory: DefaultListableBeanFactory) {
+        (1..number).forEach {
+            registerTradeVolumesListener(it, factory)
+        }
+    }
+
+    private fun registerTradeVolumesListener(index: Int, factory: DefaultListableBeanFactory) {
+        val beanDefinition = RootBeanDefinition(TradeVolumesListenerImpl::class.java)
+        beanDefinition.initMethodName = TradeVolumesListenerImpl::startProcessingTradeVolumes.name
+
+        val constructorArgumentValues = ConstructorArgumentValues()
+        constructorArgumentValues.addIndexedArgumentValue(0, index)
+
+        beanDefinition.constructorArgumentValues = constructorArgumentValues
+        factory.registerBeanDefinition("tradeVolumesListener$index", beanDefinition)
     }
 
 }

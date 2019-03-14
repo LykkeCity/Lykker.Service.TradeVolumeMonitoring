@@ -6,4 +6,6 @@ class TradeVolumeConfig(val tradeVolumeCacheConfig: TradeVolumeCacheConfig,
                         val maxTradeVolume: Long,
                         val assetId: String,
                         val matchingEngineRabbitMqConfigs: Set<RabbitMqConfig>,
-                        val db: DbConfig)
+                        val db: DbConfig,
+                        val publicApiUrl: String,
+                        val threadsNumber: Int)

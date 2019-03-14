@@ -4,6 +4,7 @@ import com.lykke.trade.volume.monitoring.service.cache.AssetsCache
 import com.lykke.trade.volume.monitoring.service.entity.Asset
 import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
 import com.lykke.utils.logging.ThrottlingLogger
+import java.util.concurrent.ConcurrentHashMap
 
 class AssetsCacheImpl(private val loader: AssetsLoader,
                       override val updateInterval: Long) : AssetsCache {
@@ -12,7 +13,8 @@ class AssetsCacheImpl(private val loader: AssetsLoader,
         private val LOGGER = ThrottlingLogger.getLogger(AssetsCacheImpl::class.java.name)
     }
 
-    private var assetsById: MutableMap<String, Asset> = HashMap()
+    @Volatile
+    private var assetsById = ConcurrentHashMap<String, Asset>()
 
     override fun getAsset(assetId: String): Asset? {
         var asset = assetsById[assetId]
@@ -32,7 +34,7 @@ class AssetsCacheImpl(private val loader: AssetsLoader,
             LOGGER.error("Unable to load assets", e)
             return
         }
-        this.assetsById = assetsById.toMutableMap()
+        this.assetsById = ConcurrentHashMap(assetsById)
         LOGGER.debug("Loaded ${assetsById.size} assets")
     }
 
