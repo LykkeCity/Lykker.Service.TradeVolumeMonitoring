@@ -12,6 +12,7 @@ import com.lykke.trade.volume.monitoring.service.cache.impl.AssetPairsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.AssetsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.PricesCacheImpl
 import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.holder.AssetPairsHolder
 import com.lykke.trade.volume.monitoring.service.holder.AssetsHolder
@@ -24,7 +25,9 @@ import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
-import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesGeneratedLoader
+import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetPairsLoader
+import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoader
+import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
 import com.lykke.trade.volume.monitoring.service.process.MatchingEngineEventSubscriber
@@ -58,17 +61,43 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
     @Bean
     fun assetsLoader(config: Config): AssetsLoader {
-        return AzureAssetsLoader(config.tradeVolumeConfig.db.assetsConnString)
+        return when (config.tradeVolumeConfig.assetDictionarySource) {
+            AssetDictionarySource.Azure ->
+                azureAssetsLoader(config.tradeVolumeConfig.azureAssetDictionaries!!.assetsConnString)
+            AssetDictionarySource.PublicApi ->
+                publicApiAssetsLoader(config.tradeVolumeConfig.publicApiUrl)
+        }
+    }
+
+    private fun azureAssetsLoader(connectionString: String): AzureAssetsLoader {
+        return AzureAssetsLoader(connectionString)
+    }
+
+    private fun publicApiAssetsLoader(publicApiUrl: String): PublicApiAssetsLoader {
+        return PublicApiAssetsLoader(publicApiUrl)
     }
 
     @Bean
     fun assetPairsLoader(config: Config): AssetPairsLoader {
-        return AzureAssetPairsLoader(config.tradeVolumeConfig.db.assetPairsConnString)
+        return when (config.tradeVolumeConfig.assetDictionarySource) {
+            AssetDictionarySource.Azure ->
+                azureAssetPairsLoader(config.tradeVolumeConfig.azureAssetDictionaries!!.assetPairsConnString)
+            AssetDictionarySource.PublicApi ->
+                publicApiAssetPairsLoader(config.tradeVolumeConfig.publicApiUrl)
+        }
+    }
+
+    private fun azureAssetPairsLoader(connectionString: String): AzureAssetPairsLoader {
+        return AzureAssetPairsLoader(connectionString)
+    }
+
+    private fun publicApiAssetPairsLoader(publicApiUrl: String): PublicApiAssetPairsLoader {
+        return PublicApiAssetPairsLoader(publicApiUrl)
     }
 
     @Bean
     fun ratesLoader(config: Config): RatesLoader {
-        return PublicApiRatesGeneratedLoader(config.tradeVolumeConfig.publicApiUrl)
+        return PublicApiRatesLoader(config.tradeVolumeConfig.publicApiUrl)
     }
 
     @Bean

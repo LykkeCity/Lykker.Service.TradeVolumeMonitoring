@@ -6,19 +6,16 @@ import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.Ap
 import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api.AssetPairsApi
 import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.ApiAssetPairRateModel
 
-class PublicApiRatesGeneratedLoader(publicApiUrl: String) : RatesLoader {
+class PublicApiRatesLoader(publicApiUrl: String) : RatesLoader {
 
     private val client = AssetPairsApi(ApiClient().setBasePath(publicApiUrl))
 
     override fun loadRatesByAssetPairIdMap(): Map<String, Rate> {
-        val response = client.apiAssetPairsRateGet()
-        val ratesByAssetPairId = HashMap<String, Rate>()
-        response.iterator().forEach { publicApiRate ->
-            convertToRate(publicApiRate)?.let { rate ->
-                ratesByAssetPairId[rate.assetPairId] = rate
-            }
-        }
-        return ratesByAssetPairId
+        return client.apiAssetPairsRateGet()
+                .asSequence()
+                .mapNotNull(::convertToRate)
+                .groupBy { it.assetPairId }
+                .mapValues { it.value.single() }
     }
 
     override fun loadRate(assetPairId: String): Rate? {

@@ -43,7 +43,7 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
                 .mapValues {
                     if (it.value.size > 1) {
                         LOGGER.error("There are more than 1 asset pair for baseAssetId=${it.value.first().baseAssetId} " +
-                                "and quotingAssetId=${it.value.first().quotingAssetId}")
+                                "and quotingAssetId=${it.value.first().quotingAssetId}: ${it.value.map(AssetPair::id)}")
                     }
                     it.value.first()
                 }
