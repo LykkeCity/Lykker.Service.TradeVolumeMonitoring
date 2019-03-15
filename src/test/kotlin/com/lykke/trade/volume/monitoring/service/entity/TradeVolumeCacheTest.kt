@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
 import com.lykke.trade.volume.monitoring.service.assertEquals
+import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
 import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
@@ -17,7 +18,7 @@ class TradeVolumeCacheTest {
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(TradeVolumeConfig(TradeVolumeCacheConfig(100L, 100)))
+        tradeVolumeCache = TradeVolumeCacheImpl(Config(TradeVolumeConfig(TradeVolumeCacheConfig(100L, 100))))
     }
 
     @Test

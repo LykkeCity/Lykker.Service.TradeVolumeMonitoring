@@ -1,6 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.entity.impl
 
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
+import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -8,7 +8,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 @Component
-class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolumeCache {
+class TradeVolumeCacheImpl(val config: Config) : TradeVolumeCache {
 
     private val tradeVolumesByAssetIdByWalletId = HashMap<String, HashMap<String, MutableList<Volume>>>()
     private val tradeVolumeForPeriodByAssetIdByWalletId = HashMap<String, HashMap<String, BigDecimal>>()
@@ -46,7 +46,7 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
 
         val volumesIterator = volumes.iterator()
 
-        val oldItemsBound = Date().time - tradeVolumeConfig.tradeVolumeCacheConfig.expiryPeriod
+        val oldItemsBound = Date().time - config.tradeVolumeConfig.tradeVolumeCacheConfig.expiryPeriod
         var removedVolumesSum = BigDecimal.ZERO
 
         var currentVolume: Volume? = if (volumesIterator.hasNext()) {
@@ -94,7 +94,7 @@ class TradeVolumeCacheImpl(val tradeVolumeConfig: TradeVolumeConfig) : TradeVolu
     }
 
     private fun isExpired(date: Date): Boolean {
-        return Date().time - tradeVolumeConfig.tradeVolumeCacheConfig.expiryPeriod >= date.time
+        return Date().time - config.tradeVolumeConfig.tradeVolumeCacheConfig.expiryPeriod >= date.time
     }
 
     private class Volume(val timestamp: Date, val volume: BigDecimal)
