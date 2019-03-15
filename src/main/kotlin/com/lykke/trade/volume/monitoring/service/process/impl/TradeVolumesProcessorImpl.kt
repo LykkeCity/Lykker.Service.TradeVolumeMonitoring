@@ -2,12 +2,14 @@ package com.lykke.trade.volume.monitoring.service.process.impl
 
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
+import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
 
 class TradeVolumesProcessorImpl(private val targetAssetId: String,
-                                private val converter: AssetVolumeConverter) : TradeVolumesProcessor {
+                                private val converter: AssetVolumeConverter,
+                                private val tradeVolumeCache: TradeVolumeCache) : TradeVolumesProcessor {
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(TradeVolumesProcessorImpl::class.java.name)
@@ -31,7 +33,10 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         else
             converter.convert(tradeVolume.assetId, tradeVolume.volume, targetAssetId)
 
-        // todo put volume to cache
+        tradeVolumeCache.add(tradeVolume.walletId,
+                tradeVolume.assetId,
+                targetAssetVolume,
+                tradeVolume.timestamp)
 
         LOGGER.info(messageId, "Processed trade volume ($tradeVolume), " +
                 "targetAsset: $targetAssetId, " +
