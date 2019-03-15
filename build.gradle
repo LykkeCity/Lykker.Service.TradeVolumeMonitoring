@@ -16,6 +16,7 @@ sourceCompatibility = '1.8'
 
 repositories {
 	mavenCentral()
+	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 ext.kotlin_version = '1.2.10'
 
@@ -23,6 +24,8 @@ ext {
 	springfox_swagger2 = "2.9.2"
 	springfox_swagger_ui = "2.9.2"
 	lmax_disruptor_version = '3.4.2'
+	gson_version = '2.6.2'
+	kotlin_utils_version = '0.0.10-SNAPSHOT'
 }
 
 configurations {
@@ -34,6 +37,10 @@ dependencies {
 	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+	compile "org.bitbucket.lykke:kotlin-utils:$kotlin_utils_version"
+
+	compile "com.google.code.gson:gson:$gson_version"
 	compile("org.springframework.boot:spring-boot-starter-log4j2")
 	compile "com.lmax:disruptor:$lmax_disruptor_version"
 
