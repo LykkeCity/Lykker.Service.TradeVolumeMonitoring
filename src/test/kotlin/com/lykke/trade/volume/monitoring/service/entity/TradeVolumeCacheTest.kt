@@ -44,6 +44,7 @@ class TradeVolumeCacheTest {
     fun testAllExpired() {
         tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
         tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
+        assertEquals(BigDecimal.valueOf(2.0), tradeVolumeCache.get(WALLET1, ASSET1))
         Thread.sleep(150)
         assertEquals(BigDecimal.ZERO, tradeVolumeCache.get(WALLET1, ASSET1))
 
@@ -54,10 +55,8 @@ class TradeVolumeCacheTest {
     @Test
     fun testClear() {
         tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        Thread.sleep(150)
-        assertEquals(BigDecimal.ZERO, tradeVolumeCache.get(WALLET1, ASSET1))
-
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
         assertEquals(BigDecimal.valueOf(1.0), tradeVolumeCache.get(WALLET1, ASSET1))
+        tradeVolumeCache.clear()
+        assertEquals(BigDecimal.ZERO, tradeVolumeCache.get(WALLET1, ASSET1))
     }
 }
