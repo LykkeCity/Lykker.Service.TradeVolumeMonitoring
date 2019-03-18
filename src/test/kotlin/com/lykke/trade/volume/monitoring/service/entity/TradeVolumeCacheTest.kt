@@ -9,54 +9,75 @@ import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
 import java.util.*
+import kotlin.test.assertEquals
 
 class TradeVolumeCacheTest {
 
     private lateinit var tradeVolumeCache: TradeVolumeCache
-    private val WALLET1 = "WALLET1!"
+    private val CLIENT1 = "CLIENT1"
     private val ASSET1 = "ASSET1"
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(Config(TradeVolumeConfig(TradeVolumeCacheConfig(100L))))
+        tradeVolumeCache = TradeVolumeCacheImpl(Config(TradeVolumeConfig(TradeVolumeCacheConfig(100L, 2, 100L), BigDecimal.valueOf(1000))))
+    }
+
+    @Test
+    fun volumesAreNotifiedOnlyOnce() {
+
+    }
+
+    @Test
+    fun oneVolumeExceedsLimit() {
+        val timestamp = Date()
+        val volumesByTimestamp = tradeVolumeCache.add(CLIENT1, ASSET1, BigDecimal.valueOf(1000), timestamp)
+        assertEquals(1, volumesByTimestamp.size)
+        assertEquals(BigDecimal.valueOf(1000), volumesByTimestamp[timestamp.time])
+    }
+
+    @Test
+    fun testVolumeIsInsertedAtTheMiddle() {
+        val now = Date()
+        val first = Date(now.time - 100)
+        val second = Date(first.time + 99)
+        val third = Date(second.time + 99)
+
+        val firstResult = tradeVolumeCache.add(CLIENT1, ASSET1, BigDecimal.valueOf(10), first)
+        assertEquals(0, firstResult.size)
+        val thirdResult = tradeVolumeCache.add(CLIENT1, ASSET1, BigDecimal.valueOf(900), third)
+        assertEquals(0, thirdResult.size)
+
+        val secondResult = tradeVolumeCache.add(CLIENT1, ASSET1, BigDecimal.valueOf(995), second)
+
+        assertEquals(2, secondResult.size)
+        assertEquals(BigDecimal.valueOf(1005) , secondResult[second.time])
+        assertEquals(BigDecimal.valueOf(1895) , secondResult[third.time])
+    }
+
+    @Test
+    fun testCacheClean() {
+
+    }
+
+    @Test
+    fun lockIsRemovedIfDuringCleanAllVolumesRemoved() {
+
     }
 
     @Test
     fun testAddNewVolume() {
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        assertEquals(BigDecimal.valueOf(1.0), tradeVolumeCache.get(WALLET1, ASSET1))
 
-        val result = tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(10), Date())
-        assertEquals(BigDecimal.valueOf(11), result)
     }
 
     @Test
     fun testNotAllExpired() {
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        Thread.sleep(50)
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        assertEquals(BigDecimal.valueOf(2.0), tradeVolumeCache.get(WALLET1, ASSET1))
-        Thread.sleep(70)
-        assertEquals(BigDecimal.valueOf(1.0), tradeVolumeCache.get(WALLET1, ASSET1))
+
     }
 
     @Test
     fun testAllExpired() {
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        assertEquals(BigDecimal.valueOf(2.0), tradeVolumeCache.get(WALLET1, ASSET1))
-        Thread.sleep(150)
-        assertEquals(BigDecimal.ZERO, tradeVolumeCache.get(WALLET1, ASSET1))
 
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        assertEquals(BigDecimal.valueOf(1.0), tradeVolumeCache.get(WALLET1, ASSET1))
     }
 
-    @Test
-    fun testClear() {
-        tradeVolumeCache.add(WALLET1, ASSET1, BigDecimal.valueOf(1.0), Date())
-        assertEquals(BigDecimal.valueOf(1.0), tradeVolumeCache.get(WALLET1, ASSET1))
-        tradeVolumeCache.clear()
-        assertEquals(BigDecimal.ZERO, tradeVolumeCache.get(WALLET1, ASSET1))
-    }
+
 }

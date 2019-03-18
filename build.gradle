@@ -24,7 +24,7 @@ ext {
 	springfox_swagger2 = "2.9.2"
 	springfox_swagger_ui = "2.9.2"
 	lmax_disruptor_version = '3.4.2'
-	gson_version = '2.6.2'
+	jedis_version = '2.9.0'
 	kotlin_utils_version = '0.0.10-SNAPSHOT'
 }
 
@@ -43,6 +43,7 @@ dependencies {
 	compile "com.google.code.gson:gson:$gson_version"
 	compile("org.springframework.boot:spring-boot-starter-log4j2")
 	compile "com.lmax:disruptor:$lmax_disruptor_version"
+
 
 	compile "io.springfox:springfox-swagger2:$springfox_swagger2"
 	compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
