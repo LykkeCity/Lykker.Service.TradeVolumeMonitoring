@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
 import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.utils.AppInitializer
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,6 +13,7 @@ import org.springframework.core.env.get
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import javax.annotation.PostConstruct
 
 @Configuration
 @EnableScheduling
@@ -50,6 +52,11 @@ open class ApplicationConfig {
         } else {
             null
         }
+    }
+
+    @PostConstruct
+    fun initApplication() {
+        AppInitializer.init()
     }
 
 }
