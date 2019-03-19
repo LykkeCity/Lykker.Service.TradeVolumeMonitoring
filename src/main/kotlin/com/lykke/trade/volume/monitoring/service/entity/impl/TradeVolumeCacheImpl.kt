@@ -27,12 +27,9 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
             val volumes = getVolumes(clientIdAssetId)
             val volumeToAdd = Volume(tradeIdx, timestamp, volume, clientId, assetId)
             volumes.add(volumeToAdd)
-            cumulativeVolumeByTradeVolume[getVolumeKey(volumeToAdd, clientId, assetId)] = getCumulativeVolumeForTradeVolume(clientId, assetId, volumeToAdd, volumes)
-            return getTradeVolumesForPeriod(
-                    clientId,
-                    assetId,
-                    volumeToAdd,
-                    volumes)
+            cumulativeVolumeByTradeVolume[getVolumeKey(volumeToAdd)] = getCumulativeVolumeForTradeVolume(volumeToAdd, volumes)
+
+            return getTradeVolumesForPeriod(volumeToAdd, volumes)
         }
     }
 
@@ -52,41 +49,34 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
     private fun removeOldVolumes(volumes: NavigableSet<Volume>) {
         while (!volumes.isEmpty() && isExpired(volumes.last())) {
             val removedVolume = volumes.pollLast()
-            cumulativeVolumeByTradeVolume.remove(getVolumeKey(removedVolume, removedVolume.clientId, removedVolume.assetId))
+            cumulativeVolumeByTradeVolume.remove(getVolumeKey(removedVolume))
         }
     }
 
     private fun isExpired(volume: Volume) =
             volume.timestamp.time <= Date().time - cacheConfig.expiryRatio * cacheConfig.volumePeriod
 
-    private fun getCumulativeVolumeForTradeVolume(
-            clientId: String,
-            assetId: String,
-            volume: Volume,
-            volumes: NavigableSet<Volume>): BigDecimal {
+    private fun getCumulativeVolumeForTradeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal {
         val higherVolume = volumes.higher(volume)
         return if (higherVolume != null) {
-            cumulativeVolumeByTradeVolume[getVolumeKey(higherVolume, clientId, assetId)]!!.add(volume.volume)
+            cumulativeVolumeByTradeVolume[getVolumeKey(higherVolume)]!!.add(volume.volume)
         } else {
             volume.volume
         }
     }
 
-    private fun getTradeVolumesForPeriod(clientId: String,
-                                         assetId: String,
-                                         volume: Volume,
-                                         volumes: NavigableSet<Volume>): List<Pair<Long, BigDecimal>> {
+    private fun getTradeVolumesForPeriod(volume: Volume, volumes: NavigableSet<Volume>): List<Pair<Long, BigDecimal>> {
         val result = ArrayList<Pair<Long, BigDecimal>>()
         val volumesIterator = volumes.iterator()
 
-        updateCumulativeVolumes(clientId, assetId, volume, volumes)
+        updateCumulativeVolumes(volume, volumes)
 
         while (volumesIterator.hasNext()) {
             val currentVolume = volumesIterator.next()
 
-            val periodBoundVolume = volumes.floor(Volume(Integer.MAX_VALUE, Date(currentVolume.timestamp.time - cacheConfig.volumePeriod), BigDecimal.ZERO, clientId, assetId))
+            val periodBoundVolume = volumes.floor(Volume(Integer.MAX_VALUE, Date(currentVolume.timestamp.time - cacheConfig.volumePeriod), BigDecimal.ZERO, volume.clientId, volume.assetId))
             val volumeForPeriod = if (periodBoundVolume != null) {
-                cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume, clientId, assetId)]!! - (cumulativeVolumeByTradeVolume[getVolumeKey(periodBoundVolume, clientId, assetId)]!! - periodBoundVolume.volume)
+                cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume)]!! - (cumulativeVolumeByTradeVolume[getVolumeKey(periodBoundVolume)]!! - periodBoundVolume.volume)
             } else {
                 currentVolume.volume
             }
@@ -101,10 +91,7 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
         return result
     }
 
-    private fun updateCumulativeVolumes(clientId: String,
-                                        assetId: String,
-                                        volume: Volume,
-                                        volumes: NavigableSet<Volume>) {
+    private fun updateCumulativeVolumes(volume: Volume, volumes: NavigableSet<Volume>) {
         val volumesIterator = volumes.iterator()
 
         while (volumesIterator.hasNext()) {
@@ -112,7 +99,7 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
             if (currentVolume == volume) {
                 return
             }
-            cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume, clientId, assetId)] = cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume, clientId, assetId)]!!.add(volume.volume)
+            cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume)] = cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume)]!!.add(volume.volume)
         }
     }
 
@@ -121,8 +108,8 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
         return lockByClientIdAssetId[clientIdAssetId] as Any
     }
 
-    private fun getVolumeKey(volume: Volume, clientId: String, assetId: String): String {
-        return "${volume.tradeIdx}_${volume.timestamp.time}_${clientId}_$assetId"
+    private fun getVolumeKey(volume: Volume): String {
+        return "${volume.tradeIdx}_${volume.timestamp.time}_${volume.clientId}_${volume.assetId}"
     }
 
     private fun getClientVolumesKey(clientId: String, assetId: String): String {
@@ -134,42 +121,16 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
                 .getOrPut(clientIdAssetId) { TreeSet() }
     }
 
-    private class Volume(val tradeIdx: Int,
+    private data class Volume(val tradeIdx: Int,
                          val timestamp: Date,
                          val volume: BigDecimal,
                          val clientId: String,
                          val assetId: String) : Comparable<Volume> {
         override fun compareTo(other: Volume): Int {
-             return Comparator
-                     .comparingLong<Volume> { volume -> volume.timestamp.time }.reversed()
-                     .thenComparing(Comparator.comparingInt { volume ->  volume.tradeIdx}).reversed()
-                     .compare(other, this)
+            return Comparator
+                    .comparingLong<Volume> { volume -> volume.timestamp.time }.reversed()
+                    .thenComparing(Comparator.comparingInt { volume -> volume.tradeIdx }).reversed()
+                    .compare(other, this)
         }
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Volume
-
-            if (tradeIdx != other.tradeIdx) return false
-            if (timestamp != other.timestamp) return false
-            if (volume != other.volume) return false
-            if (clientId != other.clientId) return false
-            if (assetId != other.assetId) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = tradeIdx
-            result = 31 * result + timestamp.hashCode()
-            result = 31 * result + volume.hashCode()
-            result = 31 * result + clientId.hashCode()
-            result = 31 * result + assetId.hashCode()
-            return result
-        }
-
-
     }
 }
