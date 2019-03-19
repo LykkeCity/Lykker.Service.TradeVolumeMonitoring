@@ -6,6 +6,7 @@ import java.util.*
 interface TradeVolumeCache {
     fun add(clientId: String,
             assetId: String,
+            tradeIdx: Int,
             volume: BigDecimal,
-            timestamp: Date): Map<Long, BigDecimal>
+            timestamp: Date): List<Pair<Long, BigDecimal>>
 }

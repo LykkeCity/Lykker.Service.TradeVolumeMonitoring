@@ -26,6 +26,7 @@ ext {
 	lmax_disruptor_version = '3.4.2'
 	jedis_version = '2.9.0'
 	kotlin_utils_version = '0.0.10-SNAPSHOT'
+	gson_version = '2.6.2'
 }
 
 configurations {
