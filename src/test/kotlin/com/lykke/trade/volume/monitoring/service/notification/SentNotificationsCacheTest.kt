@@ -22,7 +22,7 @@ class SentNotificationsCacheTest {
 
     @Before
     fun init() {
-        cache = SentNotificationsCacheImpl(getConfig())
+        cache = SentNotificationsCacheImpl(getConfig().tradeVolumeConfig.notificationsConfig)
     }
 
 
@@ -34,6 +34,30 @@ class SentNotificationsCacheTest {
         assertTrue(cache.isSent(CLIENT1, ASSET1))
         assertTrue(cache.isSent(CLIENT2, ASSET2))
         assertFalse(cache.isSent(CLIENT2, ASSET3))
+    }
+
+    @Test
+    fun testExpiredMessagesAreNotConsideredSent() {
+        cache.add(CLIENT1, ASSET1)
+
+        Thread.sleep(90)
+        val cleanMethod = cache::class.java.getDeclaredMethod("clean")
+        cleanMethod.isAccessible = true
+        cleanMethod.invoke(cache)
+
+        assertTrue(cache.isSent(CLIENT1, ASSET1))
+
+        Thread.sleep(15)
+        cache.add(CLIENT2, ASSET2)
+        assertFalse(cache.isSent(CLIENT1, ASSET1))
+
+        Thread.sleep(85)
+        cleanMethod.invoke(cache)
+
+        assertTrue(cache.isSent(CLIENT2, ASSET2))
+
+        Thread.sleep(20)
+        assertFalse(cache.isSent(CLIENT2, ASSET2))
     }
 
     @Test

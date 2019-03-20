@@ -1,14 +1,15 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
-import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class SentNotificationsCacheImpl(config: Config): SentNotificationsCache {
-    private val notificationConfig = config.tradeVolumeConfig.notificationsConfig
+class SentNotificationsCacheImpl(@Value("#{Config.tradeVolumeConfig.notificationsConfig}")
+                                 val notificationConfig: NotificationsConfig): SentNotificationsCache {
     private val timestampByNotificationKey = ConcurrentHashMap<String, Date>()
 
     override fun add(clientId: String, assetId: String) {
@@ -16,7 +17,8 @@ class SentNotificationsCacheImpl(config: Config): SentNotificationsCache {
     }
 
     override fun isSent(clientId: String, assetId: String): Boolean {
-        return timestampByNotificationKey[getKey(clientId, assetId)] != null
+        val timestamp = timestampByNotificationKey[getKey(clientId, assetId)]
+        return timestamp != null && timestamp.time > Date().time - notificationConfig.throttlingPeriod
     }
 
     @Scheduled(fixedRateString = "#{Config.tradeVolumeConfig.notificationsConfig.throttlingPeriod}")
