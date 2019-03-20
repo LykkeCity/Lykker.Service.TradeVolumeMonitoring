@@ -4,7 +4,7 @@ import com.lykke.me.subscriber.config.RabbitMqConfig
 import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
 
 class TradeVolumeConfig(val tradeVolumeCacheConfig: TradeVolumeCacheConfig,
-                        val maxTradeVolume: Long,
+                        val maxVolume: BigDecimal,
                         val assetId: String,
                         val matchingEngineRabbitMqConfigs: Set<RabbitMqConfig>,
                         val assetDictionarySource: AssetDictionarySource,

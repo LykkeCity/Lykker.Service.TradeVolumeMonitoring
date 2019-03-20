@@ -1,3 +1,5 @@
 package com.lykke.trade.volume.monitoring.service.config
 
-class TradeVolumeCacheConfig(val expiryPeriod: Long, val maxRecalculations: Int)
+class TradeVolumeCacheConfig(val volumePeriod: Long,
+                             val expiryRatio: Int,
+                             val cleanCacheInterval: Long)

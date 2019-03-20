@@ -4,10 +4,9 @@ import java.math.BigDecimal
 import java.util.*
 
 interface TradeVolumeCache {
-    fun clear()
-    fun add(walletId: String,
+    fun add(clientId: String,
             assetId: String,
+            tradeIdx: Int,
             volume: BigDecimal,
-            timestamp: Date): BigDecimal
-    fun get(walletId: String, assetId: String): BigDecimal
+            timestamp: Date): List<Pair<Long, BigDecimal>>
 }

@@ -4,7 +4,7 @@ import com.lykke.trade.volume.monitoring.service.utils.equalsIgnoreScale
 import java.math.BigDecimal
 
 fun assertEquals(expected: BigDecimal?, actual: BigDecimal?, message: String? = null) {
-    if (expected == null && actual == null) {
+    if (expected == null && actual == null)  {
         return
     }
 
