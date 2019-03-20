@@ -14,7 +14,7 @@ class ProtoExecutionEventProcessor : ExecutionEventProcessor {
     override fun process(event: ExecutionEvent): EventTradeVolumesWrapper {
         event as ProtoExecutionEvent
 
-        return EventTradeVolumesWrapper(event.sequenceNumber.toString(),
+        return EventTradeVolumesWrapper(event.sequenceNumber,
                 event.message.ordersList
                         .flatMap { order ->
                             order.tradesList.flatMap { orderTrade ->

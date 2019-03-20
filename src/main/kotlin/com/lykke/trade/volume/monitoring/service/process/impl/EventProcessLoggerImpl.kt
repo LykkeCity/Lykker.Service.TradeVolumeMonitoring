@@ -5,21 +5,22 @@ import com.lykke.utils.logging.ThrottlingLogger
 
 class EventProcessLoggerImpl(private val logger: ThrottlingLogger) : EventProcessLogger {
 
-    override fun info(eventId: String, infoMessage: String) {
-        logger.info(getFullMessage(eventId, infoMessage))
+    override fun info(eventSequenceNumber: Long?, infoMessage: String) {
+        logger.info(getFullMessage(eventSequenceNumber, infoMessage))
     }
 
-    override fun debug(eventId: String, debugMessage: String) {
-        logger.debug(getFullMessage(eventId, debugMessage))
+    override fun debug(eventSequenceNumber: Long?, debugMessage: String) {
+        logger.debug(getFullMessage(eventSequenceNumber, debugMessage))
     }
 
-    override fun error(eventId: String, errorMessage: String) {
-        logger.error(getFullMessage(eventId, errorMessage))
+    override fun error(eventSequenceNumber: Long?, errorMessage: String) {
+        logger.error(getFullMessage(eventSequenceNumber, errorMessage))
     }
 
-    override fun error(eventId: String, errorMessage: String, t: Throwable) {
-        logger.error(getFullMessage(eventId, errorMessage), t)
+    override fun error(eventSequenceNumber: Long?, errorMessage: String, t: Throwable) {
+        logger.error(getFullMessage(eventSequenceNumber, errorMessage), t)
     }
 
-    private fun getFullMessage(eventId: String, message: String) = "[$eventId] $message"
+    private fun getFullMessage(eventSequenceNumber: Long?, message: String) = eventSequenceNumber?.let { "[$it] $message" }
+            ?: message
 }

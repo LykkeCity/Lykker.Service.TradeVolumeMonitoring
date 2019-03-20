@@ -26,18 +26,18 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         val tradeVolumesPersistenceData = ArrayList<TradeVolumePersistenceData>(eventTradeVolumesWrapper.tradeVolumes.size)
         eventTradeVolumesWrapper.tradeVolumes.forEach { tradeVolume ->
             try {
-                val tradeVolumePersistenceData = processTradeVolume(eventTradeVolumesWrapper.eventId, tradeVolume)
+                val tradeVolumePersistenceData = processTradeVolume(eventTradeVolumesWrapper.eventSequenceNumber, tradeVolume)
                 tradeVolumesPersistenceData.add(tradeVolumePersistenceData)
             } catch (e: Exception) {
-                LOGGER.error(eventTradeVolumesWrapper.eventId,
+                LOGGER.error(eventTradeVolumesWrapper.eventSequenceNumber,
                         "Unable to process trade volume ($tradeVolume): ${e.message}",
                         e)
             }
         }
-        persistenceManager.persist(PersistenceData(eventTradeVolumesWrapper.eventId, tradeVolumesPersistenceData))
+        persistenceManager.persist(PersistenceData(eventTradeVolumesWrapper.eventSequenceNumber, tradeVolumesPersistenceData))
     }
 
-    private fun processTradeVolume(eventId: String, tradeVolume: TradeVolume): TradeVolumePersistenceData {
+    private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData {
 
         val targetAssetVolume = if (tradeVolume.assetId == targetAssetId)
             tradeVolume.volume
@@ -46,17 +46,19 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
 
         val clientId = tradeVolume.walletId // todo: additional task: map walletId -> clientId using lib
 
-        tradeVolumeCache.add(clientId,
+        tradeVolumeCache.add(eventSequenceNumber,
+                tradeVolume.tradeIdx,
+                clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,
                 tradeVolume.timestamp)
 
         // todo: additional task: check limit and send notification
 
-        LOGGER.info(eventId, "Processed trade volume ($tradeVolume), clientId: $clientId, targetAsset: $targetAssetId, " +
+        LOGGER.info(eventSequenceNumber, "Processed trade volume ($tradeVolume), clientId: $clientId, targetAsset: $targetAssetId, " +
                 "targetAssetVolume: $targetAssetVolume")
 
-        return TradeVolumePersistenceData(eventId.toLong(),
+        return TradeVolumePersistenceData(eventSequenceNumber,
                 tradeVolume.tradeIdx,
                 clientId,
                 tradeVolume.assetId,

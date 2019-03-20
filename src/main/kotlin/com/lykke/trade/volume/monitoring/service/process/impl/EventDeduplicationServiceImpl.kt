@@ -5,7 +5,7 @@ import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationServi
 
 // todo: additional task: implement deduplication
 class EventDeduplicationServiceImpl : EventDeduplicationService {
-    override fun isDuplicate(eventId: String): Boolean {
+    override fun isDuplicate(sequenceNumber: Long): Boolean {
         return false
     }
 

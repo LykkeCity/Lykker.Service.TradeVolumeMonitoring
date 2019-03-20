@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
 import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -50,6 +51,11 @@ open class ApplicationConfig {
         } else {
             null
         }
+    }
+
+    fun tradeVolumeCache(config: Config): TradeVolumeCacheImpl {
+        return TradeVolumeCacheImpl(config.tradeVolumeConfig.tradeVolumeCacheConfig.volumePeriod,
+                config.tradeVolumeConfig.tradeVolumeCacheConfig.expiryRatio)
     }
 
 }

@@ -1,4 +1,4 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
-class PersistenceData(val eventId: String,
+class PersistenceData(val eventSequenceNumber: Long,
                       val tradeVolumes: List<TradeVolumePersistenceData>)

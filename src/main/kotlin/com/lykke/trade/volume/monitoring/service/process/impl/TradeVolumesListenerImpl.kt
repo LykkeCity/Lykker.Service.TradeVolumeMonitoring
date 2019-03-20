@@ -21,19 +21,19 @@ class TradeVolumesListenerImpl(private val id: Long,
                 try {
                     processTradeVolumes(inputQueue.take())
                 } catch (e: Exception) {
-                    LOGGER.error("", "Unable to take and process trade volumes: ${e.message}", e)
+                    LOGGER.error(null, "Unable to take and process trade volumes: ${e.message}", e)
                 }
             }
         }
-        LOGGER.info("", "Started, id: $id")
+        LOGGER.info(null, "Started, id: $id")
     }
 
     private fun processTradeVolumes(tradeVolumes: EventTradeVolumesWrapper) {
         try {
             processor.process(tradeVolumes)
-            LOGGER.info(tradeVolumes.eventId, "Processed. Trade volumes: ${tradeVolumes.tradeVolumes.size}.")
+            LOGGER.info(tradeVolumes.eventSequenceNumber, "Processed. Trade volumes: ${tradeVolumes.tradeVolumes.size}.")
         } catch (e: Exception) {
-            LOGGER.error(tradeVolumes.eventId, "Unable to process trade volumes ($tradeVolumes): ${e.message}", e)
+            LOGGER.error(tradeVolumes.eventSequenceNumber, "Unable to process trade volumes ($tradeVolumes): ${e.message}", e)
         }
     }
 }

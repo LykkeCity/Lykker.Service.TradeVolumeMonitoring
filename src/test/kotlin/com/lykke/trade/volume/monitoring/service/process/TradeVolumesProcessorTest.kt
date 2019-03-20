@@ -50,21 +50,21 @@ class TradeVolumesProcessorTest {
                 TradeVolume(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), Date(date.time + 4 * day))
         )
 
-        processor.process(EventTradeVolumesWrapper("1234", trades))
+        processor.process(EventTradeVolumesWrapper(1234, trades))
 
         assertEquals(4, tradeVolumeCache.tradeVolumes.size)
-        assertCachedVolume(CachedVolume("wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp),
+        assertCachedVolume(CachedVolume(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp),
                 tradeVolumeCache.tradeVolumes[0])
-        assertCachedVolume(CachedVolume("wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp),
+        assertCachedVolume(CachedVolume(3, "wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp),
                 tradeVolumeCache.tradeVolumes[1])
-        assertCachedVolume(CachedVolume("wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp),
+        assertCachedVolume(CachedVolume(4, "wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp),
                 tradeVolumeCache.tradeVolumes[2])
-        assertCachedVolume(CachedVolume("wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp),
+        assertCachedVolume(CachedVolume(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp),
                 tradeVolumeCache.tradeVolumes[3])
 
         assertEquals(1, persistenceManager.data.size)
         val persistenceData = persistenceManager.data.single()
-        assertEquals("1234", persistenceData.eventId)
+        assertEquals(1234, persistenceData.eventSequenceNumber)
         assertEquals(4, persistenceData.tradeVolumes.size)
 
         assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
@@ -77,27 +77,27 @@ class TradeVolumesProcessorTest {
 
         val tradeVolumes = mutableListOf<CachedVolume>()
 
-        override fun clear() {
-        }
-
-        override fun add(walletId: String, assetId: String, volume: BigDecimal, timestamp: Date): BigDecimal {
-            tradeVolumes.add(CachedVolume(walletId, assetId, volume, timestamp))
-            return BigDecimal.ZERO
-        }
-
-        override fun get(walletId: String, assetId: String): BigDecimal {
-            return BigDecimal.ZERO
+        override fun add(eventSequenceNumber: Long,
+                         tradeIdx: Int,
+                         clientId: String,
+                         assetId: String,
+                         volume: BigDecimal,
+                         timestamp: Date): List<Pair<Long, BigDecimal>> {
+            tradeVolumes.add(CachedVolume(tradeIdx, clientId, assetId, volume, timestamp))
+            return emptyList()
         }
 
     }
 
-    private class CachedVolume(val walletId: String,
+    private class CachedVolume(val tradeIdx: Int,
+                               val clientId: String,
                                val assetId: String,
                                val targetAssetVolume: BigDecimal,
                                val timestamp: Date)
 
     private fun assertCachedVolume(expected: CachedVolume, actual: CachedVolume) {
-        assertEquals(expected.walletId, actual.walletId)
+        assertEquals(expected.tradeIdx, actual.tradeIdx)
+        assertEquals(expected.clientId, actual.clientId)
         assertEquals(expected.assetId, actual.assetId)
         assertEquals(expected.targetAssetVolume, actual.targetAssetVolume)
         assertEquals(expected.timestamp, actual.timestamp)

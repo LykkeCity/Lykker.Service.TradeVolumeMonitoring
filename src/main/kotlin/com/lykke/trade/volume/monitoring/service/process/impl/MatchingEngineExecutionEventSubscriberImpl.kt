@@ -22,25 +22,24 @@ class MatchingEngineExecutionEventSubscriberImpl(private val eventDeduplicationS
         try {
             handleIncomingEvent(message)
         } catch (e: Exception) {
-            LOGGER.error(message.sequenceNumber.toString(),
+            LOGGER.error(message.sequenceNumber,
                     "Unable to read incoming event: ${e.message}",
                     e)
         }
     }
 
     private fun handleIncomingEvent(message: MeProtoEvent<*>) {
-        val eventId = message.sequenceNumber.toString()
-        LOGGER.debug(eventId, "Got incoming event, ME messageId: ${message.messageId}")
-        if (eventDeduplicationService.isDuplicate(eventId)) {
-            LOGGER.error(eventId, "Duplicate")
+        LOGGER.debug(message.sequenceNumber, "Got incoming event, ME messageId: ${message.messageId}")
+        if (eventDeduplicationService.isDuplicate(message.sequenceNumber)) {
+            LOGGER.error(message.sequenceNumber, "Duplicate")
             return
         }
-        eventDeduplicationService.addProcessedEvent(ProcessedEvent(eventId, Date().time))
+        eventDeduplicationService.addProcessedEvent(ProcessedEvent(message.sequenceNumber, Date().time))
         outputQueue.put(message as ExecutionEvent)
     }
 
     override fun subscribe() {
         matchingEngineEventListener.subscribe(this)
-        LOGGER.info("", "Subscribed")
+        LOGGER.info(null, "Subscribed")
     }
 }

@@ -27,7 +27,7 @@ class ExecutionEventProcessorTest {
         val event = buildEvent()
         val result = processor.process(event)
 
-        assertEquals("1234", result.eventId)
+        assertEquals(1234, result.eventSequenceNumber)
         assertEquals(6, result.tradeVolumes.size)
 
         // trade 1

@@ -23,23 +23,23 @@ class ExecutionEventListenerImpl(private val id: Long,
                 try {
                     processEvent(inputQueue.take())
                 } catch (e: Exception) {
-                    LOGGER.error("", "Unable to take and process event: ${e.message}", e)
+                    LOGGER.error(null, "Unable to take and process event: ${e.message}", e)
                 }
             }
         }
-        LOGGER.info("", "Started, id: $id")
+        LOGGER.info(null, "Started, id: $id")
     }
 
     private fun processEvent(event: ExecutionEvent) {
         try {
             val tradeVolumes = processor.process(event)
             if (tradeVolumes.tradeVolumes.isEmpty()) {
-                LOGGER.debug(event.sequenceNumber.toString(), "No trades in event")
+                LOGGER.debug(event.sequenceNumber, "No trades in event")
                 return
             }
             outputQueue.put(tradeVolumes)
         } catch (e: Exception) {
-            LOGGER.error(event.sequenceNumber.toString(),
+            LOGGER.error(event.sequenceNumber,
                     "Unable to process incoming execution event: ${e.message}",
                     e)
         }
