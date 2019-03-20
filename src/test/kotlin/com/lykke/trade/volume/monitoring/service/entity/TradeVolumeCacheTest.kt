@@ -162,7 +162,7 @@ class TradeVolumeCacheTest {
     }
 
     @Test
-    fun testClientHasSeveralTrades() {
+    fun testClientHasSeveralTradesAtSameTimestamp() {
         val now = Date()
         val firstTimestamp = Date(now.time - 10)
         val secondTimestamp = Date(now.time)
@@ -170,12 +170,10 @@ class TradeVolumeCacheTest {
         tradeVolumeCache.add(CLIENT1, ASSET1, 1, BigDecimal.valueOf(10), firstTimestamp)
 
         val resultSameTimestamp = tradeVolumeCache.add(CLIENT1, ASSET1, 2, BigDecimal.valueOf(20), firstTimestamp)
-        assertEquals(2, resultSameTimestamp.size)
+        assertEquals(1, resultSameTimestamp.size)
         assertEquals(firstTimestamp.time, resultSameTimestamp.first().first)
-        assertEquals(firstTimestamp.time, resultSameTimestamp[1].first)
 
         assertEquals(BigDecimal.valueOf(30), resultSameTimestamp.first().second)
-        assertEquals(BigDecimal.valueOf(20), resultSameTimestamp[1].second)
 
         val resultSecondTimestamp = tradeVolumeCache.add(CLIENT1, ASSET1, 1, BigDecimal.valueOf(5), secondTimestamp)
         assertEquals(1, resultSecondTimestamp.size)

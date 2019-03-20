@@ -128,9 +128,9 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
                          val assetId: String) : Comparable<Volume> {
         override fun compareTo(other: Volume): Int {
             return Comparator
-                    .comparingLong<Volume> { volume -> volume.timestamp.time }.reversed()
+                    .comparingLong<Volume> { volume -> volume.timestamp.time }
                     .thenComparing(Comparator.comparingInt { volume -> volume.tradeIdx }).reversed()
-                    .compare(other, this)
+                    .compare(this, other)
         }
     }
 }
