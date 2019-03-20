@@ -5,21 +5,21 @@ import com.lykke.utils.logging.ThrottlingLogger
 
 class EventProcessLoggerImpl(private val logger: ThrottlingLogger) : EventProcessLogger {
 
-    override fun info(messageId: String, infoMessage: String) {
-        logger.info(getFullMessage(messageId, infoMessage))
+    override fun info(eventId: String, infoMessage: String) {
+        logger.info(getFullMessage(eventId, infoMessage))
     }
 
-    override fun debug(messageId: String, debugMessage: String) {
-        logger.debug(getFullMessage(messageId, debugMessage))
+    override fun debug(eventId: String, debugMessage: String) {
+        logger.debug(getFullMessage(eventId, debugMessage))
     }
 
-    override fun error(messageId: String, errorMessage: String) {
-        logger.error(getFullMessage(messageId, errorMessage))
+    override fun error(eventId: String, errorMessage: String) {
+        logger.error(getFullMessage(eventId, errorMessage))
     }
 
-    override fun error(messageId: String, errorMessage: String, t: Throwable) {
-        logger.error(getFullMessage(messageId, errorMessage), t)
+    override fun error(eventId: String, errorMessage: String, t: Throwable) {
+        logger.error(getFullMessage(eventId, errorMessage), t)
     }
 
-    private fun getFullMessage(messageId: String, message: String) = "[$messageId] $message"
+    private fun getFullMessage(eventId: String, message: String) = "[$eventId] $message"
 }

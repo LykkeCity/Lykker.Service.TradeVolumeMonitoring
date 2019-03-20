@@ -34,12 +34,12 @@ class ExecutionEventListenerImpl(private val id: Long,
         try {
             val tradeVolumes = processor.process(event)
             if (tradeVolumes.tradeVolumes.isEmpty()) {
-                LOGGER.debug(event.messageId, "No trades in event")
+                LOGGER.debug(event.sequenceNumber.toString(), "No trades in event")
                 return
             }
             outputQueue.put(tradeVolumes)
         } catch (e: Exception) {
-            LOGGER.error(event.messageId,
+            LOGGER.error(event.sequenceNumber.toString(),
                     "Unable to process incoming execution event: ${e.message}",
                     e)
         }

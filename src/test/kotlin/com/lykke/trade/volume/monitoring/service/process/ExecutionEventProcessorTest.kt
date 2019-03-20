@@ -27,25 +27,25 @@ class ExecutionEventProcessorTest {
         val event = buildEvent()
         val result = processor.process(event)
 
-        assertEquals("MessageId", result.messageId)
+        assertEquals("1234", result.eventId)
         assertEquals(6, result.tradeVolumes.size)
 
         // trade 1
-        assertTradeVolume(TradeVolume("Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1",
                 "Asset1", BigDecimal("1.01"), now), result.tradeVolumes[0])
-        assertTradeVolume(TradeVolume("Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1",
                 "Asset2", BigDecimal("11.111"), now), result.tradeVolumes[1])
 
         // trade 2
-        assertTradeVolume(TradeVolume("Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1",
                 "Asset1", BigDecimal("2"), now), result.tradeVolumes[2])
-        assertTradeVolume(TradeVolume("Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1",
                 "Asset2", BigDecimal("3"), now), result.tradeVolumes[3])
 
         // trade 3
-        assertTradeVolume(TradeVolume("Wallet2",
+        assertTradeVolume(TradeVolume(0, "Wallet2",
                 "Asset1", BigDecimal("100"), now), result.tradeVolumes[4])
-        assertTradeVolume(TradeVolume("Wallet2",
+        assertTradeVolume(TradeVolume(0, "Wallet2",
                 "Asset3", BigDecimal("100.01"), now), result.tradeVolumes[5])
     }
 
@@ -57,11 +57,12 @@ class ExecutionEventProcessorTest {
     }
 
     private fun buildEvent(): ProtoExecutionEvent {
-        return ProtoExecutionEvent(buildProtoMessage(), "MessageId")
+        return ProtoExecutionEvent(buildProtoMessage())
     }
 
     private fun buildProtoMessage(): OutgoingMessages.ExecutionEvent {
         val builder = OutgoingMessages.ExecutionEvent.newBuilder()
+        builder.header = OutgoingMessages.Header.newBuilder().setSequenceNumber(1234).build()
         builder.addOrders(buildProtoOrder("Wallet1", listOf(
                 Trade("Asset1", "1.01", "Asset2", "11.111", now),
                 Trade("Asset1", "2", "Asset2", "3", now)

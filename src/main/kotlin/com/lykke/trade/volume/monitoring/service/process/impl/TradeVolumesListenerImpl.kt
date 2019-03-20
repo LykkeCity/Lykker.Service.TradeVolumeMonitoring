@@ -31,9 +31,9 @@ class TradeVolumesListenerImpl(private val id: Long,
     private fun processTradeVolumes(tradeVolumes: EventTradeVolumesWrapper) {
         try {
             processor.process(tradeVolumes)
-            LOGGER.info(tradeVolumes.messageId, "Processed. Trade volumes: ${tradeVolumes.tradeVolumes.size}.")
+            LOGGER.info(tradeVolumes.eventId, "Processed. Trade volumes: ${tradeVolumes.tradeVolumes.size}.")
         } catch (e: Exception) {
-            LOGGER.error(tradeVolumes.messageId, "Unable to process trade volumes ($tradeVolumes): ${e.message}", e)
+            LOGGER.error(tradeVolumes.eventId, "Unable to process trade volumes ($tradeVolumes): ${e.message}", e)
         }
     }
 }

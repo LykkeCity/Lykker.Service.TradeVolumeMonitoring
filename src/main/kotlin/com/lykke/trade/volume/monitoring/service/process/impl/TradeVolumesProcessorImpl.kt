@@ -1,14 +1,18 @@
 package com.lykke.trade.volume.monitoring.service.process.impl
 
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
+import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
+import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
 
 class TradeVolumesProcessorImpl(private val targetAssetId: String,
                                 private val converter: AssetVolumeConverter,
+                                private val persistenceManager: PersistenceManager,
                                 private val tradeVolumeCache: TradeVolumeCache) : TradeVolumesProcessor {
 
     companion object {
@@ -16,30 +20,47 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
     }
 
     override fun process(eventTradeVolumesWrapper: EventTradeVolumesWrapper) {
+        if (eventTradeVolumesWrapper.tradeVolumes.isEmpty()) {
+            return
+        }
+        val tradeVolumesPersistenceData = ArrayList<TradeVolumePersistenceData>(eventTradeVolumesWrapper.tradeVolumes.size)
         eventTradeVolumesWrapper.tradeVolumes.forEach { tradeVolume ->
             try {
-                processTradeVolume(eventTradeVolumesWrapper.messageId, tradeVolume)
+                val tradeVolumePersistenceData = processTradeVolume(eventTradeVolumesWrapper.eventId, tradeVolume)
+                tradeVolumesPersistenceData.add(tradeVolumePersistenceData)
             } catch (e: Exception) {
-                LOGGER.error(eventTradeVolumesWrapper.messageId,
+                LOGGER.error(eventTradeVolumesWrapper.eventId,
                         "Unable to process trade volume ($tradeVolume): ${e.message}",
                         e)
             }
         }
+        persistenceManager.persist(PersistenceData(eventTradeVolumesWrapper.eventId, tradeVolumesPersistenceData))
     }
 
-    private fun processTradeVolume(messageId: String, tradeVolume: TradeVolume) {
+    private fun processTradeVolume(eventId: String, tradeVolume: TradeVolume): TradeVolumePersistenceData {
+
         val targetAssetVolume = if (tradeVolume.assetId == targetAssetId)
             tradeVolume.volume
         else
             converter.convert(tradeVolume.assetId, tradeVolume.volume, targetAssetId)
 
-        tradeVolumeCache.add(tradeVolume.walletId,
+        val clientId = tradeVolume.walletId // todo: additional task: map walletId -> clientId using lib
+
+        tradeVolumeCache.add(clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,
                 tradeVolume.timestamp)
 
-        LOGGER.info(messageId, "Processed trade volume ($tradeVolume), " +
-                "targetAsset: $targetAssetId, " +
+        // todo: additional task: check limit and send notification
+
+        LOGGER.info(eventId, "Processed trade volume ($tradeVolume), clientId: $clientId, targetAsset: $targetAssetId, " +
                 "targetAssetVolume: $targetAssetVolume")
+
+        return TradeVolumePersistenceData(eventId.toLong(),
+                tradeVolume.tradeIdx,
+                clientId,
+                tradeVolume.assetId,
+                targetAssetVolume,
+                tradeVolume.timestamp)
     }
 }

@@ -29,11 +29,15 @@ import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
+import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
+import com.lykke.trade.volume.monitoring.service.persistence.redis.RedisPersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
+import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
 import com.lykke.trade.volume.monitoring.service.process.MatchingEngineEventSubscriber
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
 import com.lykke.trade.volume.monitoring.service.process.impl.AssetVolumeConverterImpl
+import com.lykke.trade.volume.monitoring.service.process.impl.EventDeduplicationServiceImpl
 import com.lykke.trade.volume.monitoring.service.process.impl.ExecutionEventListenerImpl
 import com.lykke.trade.volume.monitoring.service.process.impl.MatchingEngineExecutionEventSubscriberImpl
 import com.lykke.trade.volume.monitoring.service.process.impl.ProtoExecutionEventProcessor
@@ -148,9 +152,11 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     @Bean(initMethod = "subscribe")
-    fun matchingEngineExecutionEventSubscriber(matchingEngineEventListener: Listener<MeProtoEvent<*>>,
+    fun matchingEngineExecutionEventSubscriber(eventDeduplicationService: EventDeduplicationService,
+                                               matchingEngineEventListener: Listener<MeProtoEvent<*>>,
                                                executionEventQueue: BlockingQueue<ExecutionEvent>): MatchingEngineEventSubscriber {
-        return MatchingEngineExecutionEventSubscriberImpl(matchingEngineEventListener,
+        return MatchingEngineExecutionEventSubscriberImpl(eventDeduplicationService,
+                matchingEngineEventListener,
                 executionEventQueue)
     }
 
@@ -160,11 +166,23 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     @Bean
+    fun persistenceManager(): PersistenceManager {
+        return RedisPersistenceManager()
+    }
+
+    @Bean
+    fun eventDeduplicationService(): EventDeduplicationService {
+        return EventDeduplicationServiceImpl()
+    }
+
+    @Bean
     fun tradeVolumesProcessor(assetVolumeConverter: AssetVolumeConverter,
                               config: Config,
+                              persistenceManager: PersistenceManager,
                               tradeVolumeCache: TradeVolumeCache): TradeVolumesProcessor {
         return TradeVolumesProcessorImpl(config.tradeVolumeConfig.assetId,
                 assetVolumeConverter,
+                persistenceManager,
                 tradeVolumeCache)
     }
 

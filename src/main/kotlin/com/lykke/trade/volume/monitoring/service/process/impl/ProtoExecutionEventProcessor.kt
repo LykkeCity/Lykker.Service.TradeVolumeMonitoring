@@ -13,20 +13,24 @@ class ProtoExecutionEventProcessor : ExecutionEventProcessor {
 
     override fun process(event: ExecutionEvent): EventTradeVolumesWrapper {
         event as ProtoExecutionEvent
-        return EventTradeVolumesWrapper(event.messageId, event.message.ordersList
-                .flatMap { order ->
-            order.tradesList.flatMap { orderTrade ->
-                val baseAssetOperation = TradeVolume(order.walletId,
-                        orderTrade.baseAssetId,
-                        orderTrade.baseVolume.toBigDecimal().abs(),
-                        convertToDate(orderTrade.timestamp))
-                val quotingAssetOperation = TradeVolume(order.walletId,
-                        orderTrade.quotingAssetId,
-                        orderTrade.quotingVolume.toBigDecimal().abs(),
-                        convertToDate(orderTrade.timestamp))
-                listOf(baseAssetOperation, quotingAssetOperation)
-            }
-        })
+
+        return EventTradeVolumesWrapper(event.sequenceNumber.toString(),
+                event.message.ordersList
+                        .flatMap { order ->
+                            order.tradesList.flatMap { orderTrade ->
+                                val baseAssetOperation = TradeVolume(orderTrade.index,
+                                        order.walletId,
+                                        orderTrade.baseAssetId,
+                                        orderTrade.baseVolume.toBigDecimal().abs(),
+                                        convertToDate(orderTrade.timestamp))
+                                val quotingAssetOperation = TradeVolume(orderTrade.index,
+                                        order.walletId,
+                                        orderTrade.quotingAssetId,
+                                        orderTrade.quotingVolume.toBigDecimal().abs(),
+                                        convertToDate(orderTrade.timestamp))
+                                listOf(baseAssetOperation, quotingAssetOperation)
+                            }
+                        })
     }
 
     private fun convertToDate(protoTimestamp: Timestamp): Date {
