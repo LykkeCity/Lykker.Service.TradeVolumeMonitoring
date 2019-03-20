@@ -19,7 +19,7 @@ class TradeVolumeCacheTest {
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(getConfig())
+        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig)
     }
 
     @Test
