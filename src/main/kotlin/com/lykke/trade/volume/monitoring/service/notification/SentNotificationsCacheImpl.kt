@@ -15,8 +15,8 @@ class SentNotificationsCacheImpl(config: Config): SentNotificationsCache {
         timestampByNotificationKey[getKey(clientId, assetId)] = Date()
     }
 
-    override fun isSent(clientId: String, assetId: String) {
-        timestampByNotificationKey[getKey(clientId, assetId)]
+    override fun isSent(clientId: String, assetId: String): Boolean {
+        return timestampByNotificationKey[getKey(clientId, assetId)] != null
     }
 
     @Scheduled(fixedRateString = "#{Config.tradeVolumeConfig.notificationsConfig.throttlingPeriod}")
