@@ -1,9 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
-import com.lykke.trade.volume.monitoring.service.config.Config
-import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
+import com.lykke.trade.volume.monitoring.service.getConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -25,9 +22,7 @@ class SentNotificationsCacheTest {
 
     @Before
     fun init() {
-        cache = SentNotificationsCacheImpl(Config(TradeVolumeConfig(TradeVolumeCacheConfig(100, 100),
-                NotificationsConfig(100L),
-                100)))
+        cache = SentNotificationsCacheImpl(getConfig())
     }
 
 
