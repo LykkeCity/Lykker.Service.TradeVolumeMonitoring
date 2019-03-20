@@ -2,6 +2,7 @@ package com.lykke.trade.volume.monitoring.service.web.controllers
 
 import com.lykke.trade.volume.monitoring.service.isalive.IsAliveResponseGetter
 import com.lykke.trade.volume.monitoring.service.web.dto.IsAliveResponseDto
+import com.lykke.trade.volume.monitoring.service.web.dto.MonitoringStatsDto
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.slf4j.LoggerFactory
@@ -22,7 +23,19 @@ class IsAliveController(private val isAliveResponseGetter: IsAliveResponseGetter
     @ApiOperation("Get alive status")
     fun isAlive(): ResponseEntity<IsAliveResponseDto> {
         val isAliveResponse = isAliveResponseGetter.getResponse()
-        val isAliveResponseDto = IsAliveResponseDto(isAliveResponse.version)
+        val monitoringStatsDto = isAliveResponse.monitoringStats?.let {
+            MonitoringStatsDto(VmCpuLoad = it.vmCpuLoad,
+                    TotalCpuLoad = it.totalCpuLoad,
+                    TotalMemory = it.totalMemory,
+                    FreeMemory = it.freeMemory,
+                    MaxHeap = it.maxHeap,
+                    TotalHeap = it.totalHeap,
+                    FreeHeap = it.freeHeap,
+                    TotalSwap = it.totalSwap,
+                    FreeSwap = it.freeSwap,
+                    ThreadsCount = it.threadsCount)
+        }
+        val isAliveResponseDto = IsAliveResponseDto(isAliveResponse.version, monitoringStatsDto)
         LOGGER.debug("Got isAlive request")
         return ResponseEntity.status(isAliveResponse.responseCode).body(isAliveResponseDto)
     }
