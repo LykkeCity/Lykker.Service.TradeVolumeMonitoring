@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('io.swagger:swagger-codegen:2.2.3')
+    }
+}
+
 plugins {
     id 'org.springframework.boot' version '2.1.3.RELEASE'
     id 'org.jetbrains.kotlin.jvm' version '1.2.71'
@@ -19,13 +28,66 @@ repositories {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
+
+import io.swagger.codegen.DefaultGenerator
+import io.swagger.codegen.config.CodegenConfigurator
+
+def swaggerInput = "${rootDir}/src/main/swagger/publicApi.json"
+def swaggerOutputDir = file('build/swagger')
+task generateApi {
+    inputs.file(swaggerInput)
+    outputs.dir(swaggerOutputDir)
+    doLast {
+        def config = new CodegenConfigurator()
+        config.setInputSpec(swaggerInput)
+        config.setOutputDir(swaggerOutputDir.path)
+        config.setLang('java')
+        config.setAdditionalProperties([
+                'invokerPackage': 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client',
+                'modelPackage'  : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model',
+                'apiPackage'    : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api',
+                'dateLibrary'   : 'java8'
+        ])
+        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+    }
+}
+
+clean.doFirst {
+    delete(swaggerOutputDir)
+}
+
+configurations {
+    swagger
+}
+
+sourceSets {
+    swagger {
+        compileClasspath = configurations.swaggerCompile
+        java {
+            srcDir file("${project.buildDir.path}/swagger/src/main/java")
+        }
+    }
+    main {
+        compileClasspath += swagger.output
+        runtimeClasspath += swagger.output
+    }
+    test {
+        compileClasspath += swagger.output
+        runtimeClasspath += swagger.output
+    }
+}
+
+compileSwaggerJava.dependsOn generateApi
+classes.dependsOn swaggerClasses
+compileJava.dependsOn compileSwaggerJava
+
 ext {
     springfox_swagger2 = "2.9.2"
     springfox_swagger_ui = "2.9.2"
     lmax_disruptor_version = '3.4.2'
     kotlin_version = '1.2.10'
     kotlin_utils_version = '0.0.11-SNAPSHOT'
-    gson_version = '2.6.2'
+    gson_version = '2.8.1'
     me_message_subscriber_version = '1.0.3-SNAPSHOT'
 
     okhttp_version = '2.7.5'
@@ -36,6 +98,11 @@ configurations {
 }
 
 dependencies {
+    swaggerCompile 'io.swagger:swagger-annotations:1.5.16'
+    swaggerCompile "com.squareup.okhttp:okhttp:$okhttp_version"
+    swaggerCompile "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    swaggerCompile "com.google.code.gson:gson:$gson_version"
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
@@ -44,7 +111,6 @@ dependencies {
     compile "org.bitbucket.lykke:kotlin-utils:$kotlin_utils_version"
     compile "org.bitbucket.lykke:me-message-subscriber:$me_message_subscriber_version"
 
-    compile "com.google.code.gson:gson:$gson_version"
     compile("org.springframework.boot:spring-boot-starter-log4j2")
     compile "com.lmax:disruptor:$lmax_disruptor_version"
 
@@ -52,17 +118,12 @@ dependencies {
     compile "io.springfox:springfox-swagger2:$springfox_swagger2"
     compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
 
-    // <generated-public-api-client-libs>
-    compile files('libs/generated-public-api-client.jar')
-    compile "com.squareup.okhttp:okhttp:$okhttp_version"
-    compile "com.squareup.okhttp:logging-interceptor:$okhttp_version"
-    compile 'org.threeten:threetenbp:1.3.6'
-    compile 'io.gsonfire:gson-fire:1.8.0'
-    // </generated-public-api-client-libs>
+    runtime "com.squareup.okhttp:okhttp:$okhttp_version"
+    runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"
+    runtime "com.google.code.gson:gson:$gson_version"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-
 }
 
 compileKotlin {

@@ -2,9 +2,9 @@ package com.lykke.trade.volume.monitoring.service.loader.http
 
 import com.lykke.trade.volume.monitoring.service.entity.Rate
 import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
-import io.swagger.client.ApiClient
-import io.swagger.client.api.AssetPairsApi
-import io.swagger.client.model.ApiAssetPairRateModel
+import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.ApiClient
+import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api.AssetPairsApi
+import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.ApiAssetPairRateModel
 
 class PublicApiRatesLoader(publicApiUrl: String) : RatesLoader {
 
