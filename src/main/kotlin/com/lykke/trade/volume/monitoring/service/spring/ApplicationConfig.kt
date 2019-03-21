@@ -1,7 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
 import com.lykke.trade.volume.monitoring.service.config.Config
-import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
 import org.springframework.context.EnvironmentAware
@@ -16,7 +15,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 
 @Configuration
 @EnableScheduling
-open class ApplicationConfig: EnvironmentAware {
+open class ApplicationConfig : EnvironmentAware {
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(ApplicationConfig::class.java.name)
@@ -42,7 +41,7 @@ open class ApplicationConfig: EnvironmentAware {
             return ConfigInitializer.initConfig("local", classOfT = Config::class.java)
         }
 
-        return if(environment.acceptsProfiles(Profiles.of("default"))) {
+        return if (environment.acceptsProfiles(Profiles.of("default"))) {
             val commandLineArgs = environment.getProperty("nonOptionArgs", Array<String>::class.java)
             if (commandLineArgs == null) {
                 val errorMessage = "Not enough args. Usage: httpConfigString"
@@ -53,11 +52,6 @@ open class ApplicationConfig: EnvironmentAware {
         } else {
             null
         }
-    }
-
-    fun tradeVolumeCache(config: Config): TradeVolumeCacheImpl {
-        return TradeVolumeCacheImpl(config.tradeVolumeConfig.tradeVolumeCacheConfig.volumePeriod,
-                config.tradeVolumeConfig.tradeVolumeCacheConfig.expiryRatio)
     }
 
 }

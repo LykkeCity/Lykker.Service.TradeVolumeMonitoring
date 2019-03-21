@@ -4,12 +4,9 @@ import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.util.ArrayList
-import java.util.Comparator
-import java.util.Date
-import java.util.NavigableSet
-import java.util.TreeSet
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
@@ -56,7 +53,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     }
 
     private fun isExpired(volume: Volume) =
-            volume.timestamp.time <= Date().time - expiryRatio * volumePeriod
+            volume.timestamp.time <= Date().time - cacheConfig.expiryRatio * cacheConfig.volumePeriod
 
     private fun getCumulativeVolumeForTradeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal {
         val higherVolume = volumes.higher(volume)
@@ -76,7 +73,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
         while (volumesIterator.hasNext()) {
             val currentVolume = volumesIterator.next()
 
-            val periodBoundVolume = volumes.floor(Volume(Long.MAX_VALUE, Integer.MAX_VALUE, Date(currentVolume.timestamp.time - volumePeriod), BigDecimal.ZERO, volume.clientId, volume.assetId))
+            val periodBoundVolume = volumes.floor(Volume(Long.MAX_VALUE, Integer.MAX_VALUE, Date(currentVolume.timestamp.time - cacheConfig.volumePeriod), BigDecimal.ZERO, volume.clientId, volume.assetId))
             val volumeForPeriod = if (periodBoundVolume != null) {
                 cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume)]!! - (cumulativeVolumeByTradeVolume[getVolumeKey(periodBoundVolume)]!! - periodBoundVolume.volume)
             } else {
