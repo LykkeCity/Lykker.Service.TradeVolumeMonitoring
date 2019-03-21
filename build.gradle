@@ -53,6 +53,7 @@ dependencies {
     compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
 
     // <generated-public-api-client-libs>
+    compile files('libs/generated-public-api-client.jar')
     compile "com.squareup.okhttp:okhttp:$okhttp_version"
     compile "com.squareup.okhttp:logging-interceptor:$okhttp_version"
     compile 'org.threeten:threetenbp:1.3.6'
