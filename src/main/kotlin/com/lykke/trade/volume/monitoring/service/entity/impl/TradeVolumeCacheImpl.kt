@@ -1,7 +1,8 @@
 package com.lykke.trade.volume.monitoring.service.entity.impl
 
-import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -9,10 +10,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
-
-    private val cacheConfig = config.tradeVolumeConfig.tradeVolumeCacheConfig
-
+class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}") val  cacheConfig: TradeVolumeCacheConfig) : TradeVolumeCache {
     private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()

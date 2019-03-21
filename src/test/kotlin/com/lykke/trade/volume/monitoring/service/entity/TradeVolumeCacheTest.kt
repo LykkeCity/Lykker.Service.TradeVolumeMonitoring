@@ -1,9 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
-import com.lykke.trade.volume.monitoring.service.config.Config
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
-import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
 import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
+import com.lykke.trade.volume.monitoring.service.getConfig
 import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
@@ -21,7 +19,7 @@ class TradeVolumeCacheTest {
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(Config(TradeVolumeConfig(TradeVolumeCacheConfig(100L, 2, 100L), BigDecimal.valueOf(1000))))
+        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig)
     }
 
     @Test
