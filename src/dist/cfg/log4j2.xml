@@ -34,6 +34,7 @@
             <AppenderRef ref="ServerLog"/>
         </AsyncRoot>
 
+        <!-- fixme consider switching this to info for release -->
         <AsyncLogger name="com.lykke.trade.volume.monitoring.service.process" level="debug" additivity="false">
             <AppenderRef ref="IncomingEventProcessLog"/>
         </AsyncLogger>
