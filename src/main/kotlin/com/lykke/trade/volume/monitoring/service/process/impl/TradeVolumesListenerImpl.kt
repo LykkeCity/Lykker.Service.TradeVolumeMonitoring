@@ -5,9 +5,10 @@ import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFacto
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesListener
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
 import java.util.concurrent.BlockingQueue
-import kotlin.concurrent.thread
+import java.util.concurrent.Executor
 
 class TradeVolumesListenerImpl(private val id: Long,
+                               private val executor: Executor,
                                private val inputQueue: BlockingQueue<EventTradeVolumesWrapper>,
                                private val processor: TradeVolumesProcessor) : TradeVolumesListener {
 
@@ -16,7 +17,7 @@ class TradeVolumesListenerImpl(private val id: Long,
     }
 
     override fun startProcessingTradeVolumes() {
-        thread(name = "TradeVolumesProcessingThread-$id") {
+        executor.execute {
             while (true) {
                 try {
                     processTradeVolumes(inputQueue.take())

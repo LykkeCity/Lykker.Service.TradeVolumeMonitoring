@@ -8,20 +8,26 @@ import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.mo
 
 class PublicApiAssetPairsLoader(publicApiUrl: String) : AssetPairsLoader {
 
+    companion object {
+        private const val MARKET_PARAM_VALUE = "Spot"
+    }
+
     private val client = AssetPairsApi(ApiClient().setBasePath(publicApiUrl))
 
     override fun loadAssetPairsByIdMap(): Map<String, AssetPair> {
-        return client.apiAssetPairsDictionaryByMarketGet("Spot")
+        return client.apiAssetPairsDictionaryByMarketGet(MARKET_PARAM_VALUE)
                 .asSequence()
                 .mapNotNull(::convertToAssetPair)
                 .groupBy { it.id }
                 .mapValues { it.value.single() }
     }
 
-    private fun convertToAssetPair(publicApiAssetPair: ApiAssetPair): AssetPair {
-        return AssetPair(publicApiAssetPair.id,
-                publicApiAssetPair.baseAssetId,
-                publicApiAssetPair.quotingAssetId,
-                publicApiAssetPair.accuracy)
+    private fun convertToAssetPair(publicApiAssetPair: ApiAssetPair): AssetPair? {
+        return publicApiAssetPair.id?.let {
+            AssetPair(publicApiAssetPair.id,
+                    publicApiAssetPair.baseAssetId,
+                    publicApiAssetPair.quotingAssetId,
+                    publicApiAssetPair.accuracy)
+        }
     }
 }

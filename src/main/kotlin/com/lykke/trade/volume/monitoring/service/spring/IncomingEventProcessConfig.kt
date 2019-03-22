@@ -43,6 +43,7 @@ import com.lykke.trade.volume.monitoring.service.process.impl.MatchingEngineExec
 import com.lykke.trade.volume.monitoring.service.process.impl.ProtoExecutionEventProcessor
 import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesListenerImpl
 import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesProcessorImpl
+import com.lykke.trade.volume.monitoring.service.spring.executor.ThreadPoolExecutorWithLogExceptionSupport
 import com.lykke.utils.notification.Listener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor
@@ -52,11 +53,28 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.beans.factory.support.RootBeanDefinition
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.task.TaskExecutor
+import org.springframework.scheduling.TaskScheduler
+import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.TimeUnit
 
 @Configuration
 class IncomingEventProcessConfig : BeanFactoryPostProcessor {
+
+
+    @Bean
+    fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
+        val size = config.tradeVolumeConfig.threadsNumber * 2
+        return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(size,
+                size,
+                60L,
+                TimeUnit.SECONDS,
+                SynchronousQueue<Runnable>(),
+                "in-event-process-%d"))
+    }
 
     @Bean
     fun executionEventQueue(): BlockingQueue<ExecutionEvent> = LinkedBlockingQueue<ExecutionEvent>()
@@ -127,8 +145,9 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     @Bean(initMethod = "start")
-    fun cacheUpdater(dataCaches: List<DataCache>): CacheUpdater {
-        return CacheUpdater(dataCaches)
+    fun cacheUpdater(dataCaches: List<DataCache>,
+                     taskScheduler: TaskScheduler): CacheUpdater {
+        return CacheUpdater(dataCaches, taskScheduler)
     }
 
     @Bean
@@ -216,6 +235,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
+        constructorArgumentValues.addIndexedArgumentValue(1, factory.getBean("incomingEventProcessThreadPool"))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("executionEventListener$index", beanDefinition)
@@ -233,6 +253,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
+        constructorArgumentValues.addIndexedArgumentValue(1, factory.getBean("incomingEventProcessThreadPool"))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("tradeVolumesListener$index", beanDefinition)

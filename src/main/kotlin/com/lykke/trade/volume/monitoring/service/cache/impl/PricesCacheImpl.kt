@@ -7,6 +7,7 @@ import com.lykke.trade.volume.monitoring.service.utils.divideWithMaxScale
 import com.lykke.utils.logging.ThrottlingLogger
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 
 class PricesCacheImpl(private val ratesLoader: RatesLoader,
                       override val updateInterval: Long) : PricesCache {
@@ -16,7 +17,7 @@ class PricesCacheImpl(private val ratesLoader: RatesLoader,
     }
 
     @Volatile
-    private var midPricesByAssetPairId = ConcurrentHashMap<String, BigDecimal>()
+    private var midPricesByAssetPairId: ConcurrentMap<String, BigDecimal> = ConcurrentHashMap<String, BigDecimal>()
 
     override fun update() {
         val ratesByAssetPairId = try {
@@ -26,7 +27,7 @@ class PricesCacheImpl(private val ratesLoader: RatesLoader,
             return
         }
         val midPricesByAssetPairId = convertToMidPricesByAssetPairIdMap(ratesByAssetPairId)
-        this.midPricesByAssetPairId = ConcurrentHashMap(midPricesByAssetPairId)
+        this.midPricesByAssetPairId = midPricesByAssetPairId
         LOGGER.debug("Loaded ${ratesByAssetPairId.size} rates (mid prices: ${midPricesByAssetPairId.size})")
     }
 
@@ -42,8 +43,8 @@ class PricesCacheImpl(private val ratesLoader: RatesLoader,
         return midPrice?.stripTrailingZeros()
     }
 
-    private fun convertToMidPricesByAssetPairIdMap(ratesByAssetPairId: Map<String, Rate>): MutableMap<String, BigDecimal> {
-        val midPricesByAssetPairId = HashMap<String, BigDecimal>()
+    private fun convertToMidPricesByAssetPairIdMap(ratesByAssetPairId: Map<String, Rate>): ConcurrentMap<String, BigDecimal> {
+        val midPricesByAssetPairId = ConcurrentHashMap<String, BigDecimal>()
         ratesByAssetPairId.forEach { assetPairId, rate ->
             calculateMidPrice(rate)?.let { midPrice ->
                 midPricesByAssetPairId[assetPairId] = midPrice

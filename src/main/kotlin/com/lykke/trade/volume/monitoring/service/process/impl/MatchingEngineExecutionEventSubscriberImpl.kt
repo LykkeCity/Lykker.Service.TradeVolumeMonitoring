@@ -31,7 +31,7 @@ class MatchingEngineExecutionEventSubscriberImpl(private val eventDeduplicationS
     private fun handleIncomingEvent(message: MeProtoEvent<*>) {
         LOGGER.debug(message.sequenceNumber, "Got incoming event, ME messageId: ${message.messageId}")
         if (eventDeduplicationService.isDuplicate(message.sequenceNumber)) {
-            LOGGER.error(message.sequenceNumber, "Duplicate")
+            LOGGER.warn(message.sequenceNumber, "Duplicate")
             return
         }
         eventDeduplicationService.addProcessedEvent(ProcessedEvent(message.sequenceNumber, Date().time))
