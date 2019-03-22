@@ -11,7 +11,11 @@
             <AppenderRef ref="ConsoleLog"/>
         </AsyncRoot>
 
-        <AsyncLogger name ="com.lykke.trade.volume.monitoring.service" level="debug">
+        <AsyncLogger name="com.lykke.trade.volume.monitoring.service" level="debug">
         </AsyncLogger>
+
+        <Logger name="AppStarter" additivity="false">
+            <AppenderRef ref="ConsoleLog"/>
+        </Logger>
     </Loggers>
 </Configuration>

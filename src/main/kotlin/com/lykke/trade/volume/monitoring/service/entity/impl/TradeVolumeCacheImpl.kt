@@ -1,7 +1,8 @@
 package com.lykke.trade.volume.monitoring.service.entity.impl
 
-import com.lykke.trade.volume.monitoring.service.config.Config
+import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
@@ -9,23 +10,21 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
-
-    private val cacheConfig = config.tradeVolumeConfig.tradeVolumeCacheConfig
-
+class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}") val  cacheConfig: TradeVolumeCacheConfig) : TradeVolumeCache {
     private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()
 
-    override fun add(clientId: String,
-                     assetId: String,
+    override fun add(eventSequenceNumber: Long,
                      tradeIdx: Int,
+                     clientId: String,
+                     assetId: String,
                      volume: BigDecimal,
                      timestamp: Date): List<Pair<Long, BigDecimal>> {
         val clientIdAssetId = getClientVolumesKey(clientId, assetId)
         synchronized(getLock(clientIdAssetId)) {
             val volumes = getVolumes(clientIdAssetId)
-            val volumeToAdd = Volume(tradeIdx, timestamp, volume, clientId, assetId)
+            val volumeToAdd = Volume(eventSequenceNumber, tradeIdx, timestamp, volume, clientId, assetId)
             volumes.add(volumeToAdd)
             cumulativeVolumeByTradeVolume[getVolumeKey(volumeToAdd)] = getCumulativeVolumeForTradeVolume(volumeToAdd, volumes)
 
@@ -74,7 +73,7 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
         while (volumesIterator.hasNext()) {
             val currentVolume = volumesIterator.next()
 
-            val periodBoundVolume = volumes.floor(Volume(Integer.MAX_VALUE, Date(currentVolume.timestamp.time - cacheConfig.volumePeriod), BigDecimal.ZERO, volume.clientId, volume.assetId))
+            val periodBoundVolume = volumes.floor(Volume(Long.MAX_VALUE, Integer.MAX_VALUE, Date(currentVolume.timestamp.time - cacheConfig.volumePeriod), BigDecimal.ZERO, volume.clientId, volume.assetId))
             val volumeForPeriod = if (periodBoundVolume != null) {
                 cumulativeVolumeByTradeVolume[getVolumeKey(currentVolume)]!! - (cumulativeVolumeByTradeVolume[getVolumeKey(periodBoundVolume)]!! - periodBoundVolume.volume)
             } else {
@@ -109,7 +108,7 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
     }
 
     private fun getVolumeKey(volume: Volume): String {
-        return "${volume.tradeIdx}_${volume.timestamp.time}_${volume.clientId}_${volume.assetId}"
+        return "${volume.eventSequenceNumber}_${volume.tradeIdx}_${volume.timestamp.time}_${volume.clientId}_${volume.assetId}"
     }
 
     private fun getClientVolumesKey(clientId: String, assetId: String): String {
@@ -121,15 +120,18 @@ class TradeVolumeCacheImpl(config: Config) : TradeVolumeCache {
                 .getOrPut(clientIdAssetId) { TreeSet() }
     }
 
-    private data class Volume(val tradeIdx: Int,
-                         val timestamp: Date,
-                         val volume: BigDecimal,
-                         val clientId: String,
-                         val assetId: String) : Comparable<Volume> {
+    private data class Volume(val eventSequenceNumber: Long,
+                              val tradeIdx: Int,
+                              val timestamp: Date,
+                              val volume: BigDecimal,
+                              val clientId: String,
+                              val assetId: String) : Comparable<Volume> {
         override fun compareTo(other: Volume): Int {
             return Comparator
                     .comparingLong<Volume> { volume -> volume.timestamp.time }
-                    .thenComparing(Comparator.comparingInt { volume -> volume.tradeIdx }).reversed()
+                    .thenComparing(Comparator.comparingLong { volume -> volume.eventSequenceNumber })
+                    .thenComparing(Comparator.comparingInt { volume -> volume.tradeIdx })
+                    .reversed()
                     .compare(this, other)
         }
     }

@@ -1,2 +1,2 @@
-# Lykker.Service.TradeVolumeMonitoring
+# Lykke.Service.TradeVolumeMonitoring
 Service for Trade Volume Monitoring
