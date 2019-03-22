@@ -16,11 +16,33 @@
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
         </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="IncomingEventProcessLog"
+                                 filePattern="../log/incomingEventProcess.log.%d{yyyy-MM-dd}"
+                                 fileName="../log/incomingEventProcess.log"
+                                 immediateFlush="true">
+            <PatternLayout>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <AsyncRoot level="info" additivity="false">
             <AppenderRef ref="ServerLog"/>
         </AsyncRoot>
+
+        <!-- fixme consider switching this to info for release -->
+        <AsyncLogger name="com.lykke.trade.volume.monitoring.service.process" level="debug" additivity="false">
+            <AppenderRef ref="IncomingEventProcessLog"/>
+        </AsyncLogger>
+
+        <Logger name="AppStarter" additivity="false">
+            <AppenderRef ref="ServerLog"/>
+            <AppenderRef ref="ConsoleLog"/>
+        </Logger>
 
         #Springfox logs
         <AsyncLogger name="springfox.documentation.spring.web" level="info"

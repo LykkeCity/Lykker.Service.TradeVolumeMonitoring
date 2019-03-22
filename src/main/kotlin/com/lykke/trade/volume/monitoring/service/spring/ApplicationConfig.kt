@@ -3,7 +3,7 @@ package com.lykke.trade.volume.monitoring.service.spring
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
@@ -15,15 +15,17 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 
 @Configuration
 @EnableScheduling
-open class ApplicationConfig {
+open class ApplicationConfig : EnvironmentAware {
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(ApplicationConfig::class.java.name)
     }
 
-
-    @Autowired
     private lateinit var environment: Environment
+
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
+    }
 
     @Bean
     open fun taskScheduler(): TaskScheduler {
@@ -39,7 +41,7 @@ open class ApplicationConfig {
             return ConfigInitializer.initConfig("local", classOfT = Config::class.java)
         }
 
-        return if(environment.acceptsProfiles(Profiles.of("default"))) {
+        return if (environment.acceptsProfiles(Profiles.of("default"))) {
             val commandLineArgs = environment.getProperty("nonOptionArgs", Array<String>::class.java)
             if (commandLineArgs == null) {
                 val errorMessage = "Not enough args. Usage: httpConfigString"
