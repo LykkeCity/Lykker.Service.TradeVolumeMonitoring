@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
-import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.cache.impl.TradeVolumeCacheImpl
 import com.lykke.trade.volume.monitoring.service.getConfig
 import org.junit.Before
 import org.junit.Test
