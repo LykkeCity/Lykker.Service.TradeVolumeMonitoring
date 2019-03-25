@@ -95,6 +95,8 @@ ext {
 
     gson_version = '2.8.1'
     okhttp_version = '2.7.5'
+
+    kotlin_mockito_version = '1.6.0'
 }
 
 configurations {
@@ -128,6 +130,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testCompile "com.nhaarman:mockito-kotlin:$kotlin_mockito_version"
 }
 
 compileKotlin {

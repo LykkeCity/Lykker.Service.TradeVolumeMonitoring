@@ -3,7 +3,7 @@ package com.lykke.trade.volume.monitoring.service.notification.impl
 import org.apache.commons.lang3.StringUtils
 import java.lang.IllegalArgumentException
 
-class MailBuilder(private val format: String) {
+class MessageBuilder(private val format: String) {
     private companion object {
         val CLIENT_ID = "clientId"
         val TRADE_VOLUME_LIMIT = "tradeVolumeLimit"
@@ -17,22 +17,22 @@ class MailBuilder(private val format: String) {
 
     private val env = HashMap<String, String>()
 
-    fun setClientId(clientId: String): MailBuilder {
+    fun setClientId(clientId: String): MessageBuilder {
         env[CLIENT_ID] = clientId
         return this
     }
 
-    fun setTradeVolumeLimit(tradeVolumeLimit: Long): MailBuilder {
+    fun setTradeVolumeLimit(tradeVolumeLimit: Long): MessageBuilder {
         env[TRADE_VOLUME_LIMIT] = tradeVolumeLimit.toString()
         return this
     }
 
-    fun setTargetAssetId(targetAssetId: String): MailBuilder {
+    fun setTargetAssetId(targetAssetId: String): MessageBuilder {
         env[TARGET_ASSET_ID] = targetAssetId
         return this
     }
 
-    fun setAssetId(assetId: String): MailBuilder {
+    fun setAssetId(assetId: String): MessageBuilder {
         env[ASSET_ID] = assetId
         return this
     }
@@ -50,14 +50,6 @@ class MailBuilder(private val format: String) {
             if (StringUtils.isEmpty(env[requiredParam])) {
                 throw IllegalArgumentException("Required parameter: $requiredParam is not provided")
             }
-
-            if(!isNumber(env[TRADE_VOLUME_LIMIT]!!)) {
-                throw IllegalArgumentException("Trade volume limit should be a number")
-            }
         }
-    }
-
-    private fun isNumber(text: String): Boolean {
-        return text.toCharArray().findLast { !Character.isDigit(it) } != null
     }
 }
