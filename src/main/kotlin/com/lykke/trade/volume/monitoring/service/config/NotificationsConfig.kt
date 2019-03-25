@@ -1,4 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.config
 
-class NotificationsConfig (val throttlingPeriod: Long,
-                           val mailAddress: List<String>)
+class NotificationsConfig(
+        val azureConfig: AzureNotificationConfig,
+        val throttlingPeriod: Long,
+        val mailAddress: List<String>)
