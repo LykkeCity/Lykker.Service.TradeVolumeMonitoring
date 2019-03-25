@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 import java.lang.IllegalArgumentException
 
 @Service
-class MailNotificationServiceImpl(
+class AzureMailNotificationServiceImpl(
         @Value("#{Config.tradeVolumeConfig.notificationsConfig.azureConfig}")
         azureNotificationConfig: AzureNotificationConfig) : MailNotificationService {
     private val mailQueue: CloudQueue = CloudStorageAccount

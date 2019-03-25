@@ -32,23 +32,26 @@ repositories {
 import io.swagger.codegen.DefaultGenerator
 import io.swagger.codegen.config.CodegenConfigurator
 
-def swaggerInput = "${rootDir}/src/main/swagger/publicApi.json"
+def swaggerInput = ["${rootDir}/src/main/swagger/publicApi.json",
+                    "${rootDir}/src/main/swagger/partnerMailNotificationApi.json"]
 def swaggerOutputDir = file('build/swagger')
 task generateApi {
-    inputs.file(swaggerInput)
-    outputs.dir(swaggerOutputDir)
-    doLast {
-        def config = new CodegenConfigurator()
-        config.setInputSpec(swaggerInput)
-        config.setOutputDir(swaggerOutputDir.path)
-        config.setLang('java')
-        config.setAdditionalProperties([
-                'invokerPackage': 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client',
-                'modelPackage'  : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model',
-                'apiPackage'    : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api',
-                'dateLibrary'   : 'java8'
-        ])
-        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+    swaggerInput.each { input ->
+        inputs.file(swaggerInput)
+        outputs.dir(swaggerOutputDir)
+        doLast {
+            def config = new CodegenConfigurator()
+            config.setInputSpec(input)
+            config.setOutputDir(swaggerOutputDir.path)
+            config.setLang('java')
+            config.setAdditionalProperties([
+                    'invokerPackage': 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client',
+                    'modelPackage'  : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model',
+                    'apiPackage'    : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api',
+                    'dateLibrary'   : 'java8'
+            ])
+            new DefaultGenerator().opts(config.toClientOptInput()).generate()
+        }
     }
 }
 
