@@ -35,8 +35,6 @@ class NotificationServiceTest {
         notificationService.sendTradeVolumeLimitReachedMailNotification(clientId, assetId)
 
         //then
-        notificationsConfig.mailAddress.forEach { mailAddress ->
-            verify(mailNotificationService).sendMail(mailAddress, messageSubject, "${clientId}_${maxVolume}_${targetAssetId}_$assetId")
-        }
+        verify(mailNotificationService).sendMail(notificationsConfig.mailAddresses, messageSubject, "${clientId}_${maxVolume}_${targetAssetId}_$assetId")
     }
 }

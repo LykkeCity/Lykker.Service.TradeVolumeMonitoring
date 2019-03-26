@@ -34,7 +34,7 @@ class NotificationServiceImpl(@Value("mail.message.format") private val messageF
 
 
         try {
-            mailNotificationService.sendMail(notificationsConfig.mailAddress, messageSubject, message)
+            mailNotificationService.sendMail(notificationsConfig.mailAddresses, messageSubject, message)
         } catch (e: Exception) {
             logger.error("Error occurred when sending mail notification - volume limit reached for client $clientId, assetId: $assetId")
         }

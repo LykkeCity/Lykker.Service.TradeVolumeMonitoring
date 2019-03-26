@@ -8,4 +8,4 @@ class NotificationsConfig(
         val httpConfig: HttpApiConfig?,
         val throttlingPeriod: Long,
         val senderAddress: String,
-        val mailAddress: List<String>)
+        val mailAddresses: List<String>)
