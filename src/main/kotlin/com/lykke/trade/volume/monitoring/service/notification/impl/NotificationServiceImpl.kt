@@ -33,12 +33,10 @@ class NotificationServiceImpl(@Value("mail.message.format") private val messageF
                 .build()
 
 
-        notificationsConfig.mailAddress.forEach { mailAddress ->
-            try {
-                mailNotificationService.sendMail(mailAddress, messageSubject, message)
-            } catch (e: Exception) {
-                logger.error("Error occurred when sending mail to address: $mailAddress volume limit reached for client $clientId, assetId: $assetId")
-            }
+        try {
+            mailNotificationService.sendMail(notificationsConfig.mailAddress, messageSubject, message)
+        } catch (e: Exception) {
+            logger.error("Error occurred when sending mail notification - volume limit reached for client $clientId, assetId: $assetId")
         }
 
         logger.info(message)
