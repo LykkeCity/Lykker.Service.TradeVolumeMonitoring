@@ -29,6 +29,7 @@ import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
+import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.persistence.redis.RedisPersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
@@ -198,11 +199,14 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     fun tradeVolumesProcessor(assetVolumeConverter: AssetVolumeConverter,
                               config: Config,
                               persistenceManager: PersistenceManager,
-                              tradeVolumeCache: TradeVolumeCache): TradeVolumesProcessor {
+                              tradeVolumeCache: TradeVolumeCache,
+                              notificationService: NotificationService): TradeVolumesProcessor {
         return TradeVolumesProcessorImpl(config.tradeVolumeConfig.assetId,
                 assetVolumeConverter,
                 persistenceManager,
-                tradeVolumeCache)
+                tradeVolumeCache,
+                config.tradeVolumeConfig.maxVolume,
+                notificationService)
     }
 
     @Bean

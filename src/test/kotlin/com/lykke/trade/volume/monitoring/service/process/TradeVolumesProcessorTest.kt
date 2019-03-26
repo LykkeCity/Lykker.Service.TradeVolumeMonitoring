@@ -6,21 +6,29 @@ import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
+import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesProcessorImpl
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.junit.MockitoJUnitRunner
 import java.math.BigDecimal
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
+@RunWith(MockitoJUnitRunner::class)
 class TradeVolumesProcessorTest {
 
     private lateinit var processor: TradeVolumesProcessor
     private val tradeVolumeCache = TradeVolumeCacheStub()
     private val persistenceManager = PersistenceManagerStub()
+
+    @Mock
+    private lateinit var notificationService: NotificationService
 
     @Before
     fun setUp() {
@@ -31,7 +39,9 @@ class TradeVolumesProcessorTest {
         processor = TradeVolumesProcessorImpl("TargetAsset",
                 converter,
                 persistenceManager,
-                tradeVolumeCache)
+                tradeVolumeCache,
+                BigDecimal.valueOf(1000),
+                notificationService)
     }
 
     @Test

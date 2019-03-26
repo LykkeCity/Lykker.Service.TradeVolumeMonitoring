@@ -2,6 +2,10 @@ package com.lykke.trade.volume.monitoring.service.notification.impl
 
 import org.apache.commons.lang3.StringUtils
 import java.lang.IllegalArgumentException
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class MessageBuilder(private val format: String) {
     private companion object {
@@ -9,13 +13,21 @@ class MessageBuilder(private val format: String) {
         val TRADE_VOLUME_LIMIT = "tradeVolumeLimit"
         val TARGET_ASSET_ID = "targetAssetId"
         val ASSET_ID = "assetId"
+        val TIMESTAMP = "timestamp"
 
-        val REQUIRED_PARAMS = setOf(CLIENT_ID, TRADE_VOLUME_LIMIT, TARGET_ASSET_ID, ASSET_ID)
+        val REQUIRED_PARAMS = setOf(CLIENT_ID, TRADE_VOLUME_LIMIT, TARGET_ASSET_ID, ASSET_ID, TIMESTAMP)
 
         val MACROS_PREFIX = "%"
     }
 
     private val env = HashMap<String, String>()
+
+    fun setTimestamp(timestamp: Date): MessageBuilder {
+        env[TIMESTAMP] = ZonedDateTime
+                .ofInstant(timestamp.toInstant(), ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        return this
+    }
 
     fun setClientId(clientId: String): MessageBuilder {
         env[CLIENT_ID] = clientId
