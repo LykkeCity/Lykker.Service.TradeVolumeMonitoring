@@ -9,12 +9,16 @@ import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceDa
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesProcessorImpl
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.eq
+import com.nhaarman.mockito_kotlin.verify
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.stubbing.Answer
 import java.math.BigDecimal
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -30,9 +34,11 @@ class TradeVolumesProcessorTest {
     @Mock
     private lateinit var notificationService: NotificationService
 
+    @Mock
+    private lateinit var converter: AssetVolumeConverter
+
     @Before
     fun setUp() {
-        val converter = Mockito.mock(AssetVolumeConverter::class.java)
         Mockito.`when`(converter.convert("Asset1", BigDecimal.valueOf(5), "TargetAsset"))
                 .thenReturn(BigDecimal.valueOf(50), BigDecimal.valueOf(60))
 
@@ -40,7 +46,7 @@ class TradeVolumesProcessorTest {
                 converter,
                 persistenceManager,
                 tradeVolumeCache,
-                BigDecimal.valueOf(1000),
+                BigDecimal.valueOf(200),
                 notificationService)
     }
 
@@ -83,6 +89,23 @@ class TradeVolumesProcessorTest {
         assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp), persistenceData.tradeVolumes[3])
     }
 
+    @Test
+    fun testNotificationSent() {
+        val now = Date()
+        val trade1 = Date(now.time - 50)
+        val trade2 = Date(now.time - 30)
+        val trades = listOf(TradeVolume(0, "wallet1", "Asset1", BigDecimal.valueOf(5), trade1),
+                TradeVolume(0, "wallet1", "Asset1", BigDecimal.valueOf(105), trade2))
+
+        Mockito.`when`(converter.convert(eq("Asset1"), any(), eq("TargetAsset")))
+                .thenAnswer { invocation -> (invocation.arguments[1] as BigDecimal).multiply(BigDecimal.valueOf(2)) }
+
+        processor.process(EventTradeVolumesWrapper(1234, listOf(trades[0])))
+        processor.process(EventTradeVolumesWrapper(1235, listOf(trades[1])))
+
+        verify(notificationService).sendTradeVolumeLimitReachedMailNotification(eq("wallet1"), eq("Asset1"), eq(trade2))
+    }
+
     private class TradeVolumeCacheStub : TradeVolumeCache {
 
         val tradeVolumes = mutableListOf<CachedVolume>()
@@ -94,7 +117,9 @@ class TradeVolumesProcessorTest {
                          volume: BigDecimal,
                          timestamp: Date): List<Pair<Long, BigDecimal>> {
             tradeVolumes.add(CachedVolume(tradeIdx, clientId, assetId, volume, timestamp))
-            return emptyList()
+            var sum = BigDecimal.ZERO
+            tradeVolumes.forEach { sum = sum.add(it.targetAssetVolume) }
+            return listOf(timestamp.time to sum)
         }
 
     }
