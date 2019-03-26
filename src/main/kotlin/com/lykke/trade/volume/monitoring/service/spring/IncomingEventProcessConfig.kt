@@ -185,8 +185,13 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     @Bean
-    fun persistenceManager(): PersistenceManager {
-        return RedisPersistenceManager()
+    fun redisPersistenceManager(config: Config): RedisPersistenceManager {
+        val redisConfig = config.tradeVolumeConfig.redis
+        var ttl = TimeUnit.MILLISECONDS.toHours(config.tradeVolumeConfig.tradeVolumeCacheConfig.volumePeriod) * 2
+        if (ttl == 0L) {
+            ttl = 1
+        }
+        return RedisPersistenceManager(redisConfig, TimeUnit.HOURS.toSeconds(ttl).toInt())
     }
 
     @Bean

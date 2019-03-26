@@ -50,7 +50,7 @@ class TradeVolumesProcessorTest {
                 TradeVolume(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), Date(date.time + 4 * day))
         )
 
-        processor.process(EventTradeVolumesWrapper(1234, trades))
+        processor.process(EventTradeVolumesWrapper(1234, date, trades))
 
         assertEquals(4, tradeVolumeCache.tradeVolumes.size)
         assertCachedVolume(CachedVolume(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp),
@@ -67,10 +67,10 @@ class TradeVolumesProcessorTest {
         assertEquals(1234, persistenceData.eventSequenceNumber)
         assertEquals(4, persistenceData.tradeVolumes.size)
 
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 3, "wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp), persistenceData.tradeVolumes[1])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 4, "wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp), persistenceData.tradeVolumes[2])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp), persistenceData.tradeVolumes[3])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(3, "wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp), persistenceData.tradeVolumes[1])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(4, "wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp), persistenceData.tradeVolumes[2])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp), persistenceData.tradeVolumes[3])
     }
 
     private class TradeVolumeCacheStub : TradeVolumeCache {
@@ -105,6 +105,7 @@ class TradeVolumesProcessorTest {
 
     private fun assertTradeVolumePersistenceData(expected: TradeVolumePersistenceData,
                                                  actual: TradeVolumePersistenceData) {
+        assertEquals(expected.tradeIdx, actual.tradeIdx)
         assertEquals(expected.clientId, actual.clientId)
         assertEquals(expected.assetId, actual.assetId)
         assertEquals(expected.targetAssetVolume, actual.targetAssetVolume)

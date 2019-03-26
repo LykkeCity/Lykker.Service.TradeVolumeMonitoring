@@ -2,6 +2,7 @@ package com.lykke.trade.volume.monitoring.service
 
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
+import com.lykke.trade.volume.monitoring.service.config.RedisConfig
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
 import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
@@ -28,5 +29,6 @@ fun getConfig(volumePeriod: Long = 100, expiryRatio: Int = 2, cleanVolumeCacheIn
             AssetDictionarySource.PublicApi,
             null,
             "",
-            0))
+            0,
+            RedisConfig("", 0, 0, false, null, 0)))
 }

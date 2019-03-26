@@ -15,6 +15,7 @@ class ProtoExecutionEventProcessor : ExecutionEventProcessor {
         event as ProtoExecutionEvent
 
         return EventTradeVolumesWrapper(event.sequenceNumber,
+                convertToDate(event.message.header.timestamp),
                 event.message.ordersList
                         .flatMap { order ->
                             order.tradesList.flatMap { orderTrade ->

@@ -34,7 +34,17 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                         e)
             }
         }
-        persistenceManager.persist(PersistenceData(eventTradeVolumesWrapper.eventSequenceNumber, tradeVolumesPersistenceData))
+        persist(PersistenceData(eventTradeVolumesWrapper.eventSequenceNumber,
+                eventTradeVolumesWrapper.eventTimestamp,
+                tradeVolumesPersistenceData))
+    }
+
+    private fun persist(persistenceData: PersistenceData) {
+        try {
+            persistenceManager.persist(persistenceData)
+        } catch (e: Exception) {
+            LOGGER.error(persistenceData.eventSequenceNumber, "Unable to persist data: ${e.message}", e)
+        }
     }
 
     private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData {
@@ -58,8 +68,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         LOGGER.info(eventSequenceNumber, "Processed trade volume ($tradeVolume), clientId: $clientId, targetAsset: $targetAssetId, " +
                 "targetAssetVolume: $targetAssetVolume")
 
-        return TradeVolumePersistenceData(eventSequenceNumber,
-                tradeVolume.tradeIdx,
+        return TradeVolumePersistenceData(tradeVolume.tradeIdx,
                 clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,
