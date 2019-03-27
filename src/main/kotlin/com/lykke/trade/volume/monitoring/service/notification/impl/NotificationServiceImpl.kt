@@ -9,10 +9,13 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.lang.Exception
 import java.util.*
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.Executor
+import javax.annotation.PostConstruct
 
 @Service
-class NotificationServiceImpl(@Value("mail.message.format") private val messageFormat: String,
-                              @Value("mail.message.subject") private val messageSubject: String,
+class NotificationServiceImpl(@Value("\${mail.message.format}") private val messageFormat: String,
+                              @Value("\${mail.message.subject}") private val messageSubject: String,
                               private val mailNotificationService: MailNotificationService,
                               @Value("#{Config.tradeVolumeConfig.notificationsConfig}")
                               private val notificationsConfig: NotificationsConfig,
@@ -20,32 +23,52 @@ class NotificationServiceImpl(@Value("mail.message.format") private val messageF
                               private val maxVolume: Long,
                               @Value("#{Config.tradeVolumeConfig.assetId}")
                               private val targetAssetId: String,
-                              private val sentNotificationsCache: SentNotificationsCache) : NotificationService {
+                              private val sentNotificationsCache: SentNotificationsCache,
+                              private val applicationThreadPool: Executor,
+                              val sendNotificationRequestQueue: BlockingQueue<SendNotificationRequest>) : NotificationService {
 
     private companion object {
-        val logger = LoggerFactory.getLogger(NotificationServiceImpl::class.java)
+        val LOGGER = LoggerFactory.getLogger(NotificationServiceImpl::class.java)
     }
 
     override fun sendTradeVolumeLimitReachedMailNotification(clientId: String, assetId: String, timestamp: Date) {
-        if (sentNotificationsCache.isSent(clientId, assetId)) {
-            return
-        }
-        val messageBuilder = MessageBuilder(messageFormat)
-        val message = messageBuilder
-                .setClientId(clientId)
-                .setTradeVolumeLimit(maxVolume)
-                .setTargetAssetId(targetAssetId)
-                .setAssetId(assetId)
-                .setTimestamp(timestamp)
-                .build()
-
-        try {
-            mailNotificationService.sendMail(notificationsConfig.mailAddresses, messageSubject, message)
-        } catch (e: Exception) {
-            logger.error("Error occurred when sending mail notification - volume limit reached for client $clientId, assetId: $assetId")
-        }
-        sentNotificationsCache.add(clientId = clientId, assetId =  assetId)
-
-        logger.info(message)
+        sendNotificationRequestQueue.put(SendNotificationRequest(clientId, assetId, timestamp))
     }
+
+    @PostConstruct
+    private fun init() {
+        applicationThreadPool.execute {
+            while (true) {
+
+                if (Thread.interrupted()) {
+                    Thread.currentThread().interrupt()
+                    return@execute
+                }
+
+                val request = sendNotificationRequestQueue.take()
+
+                try {
+                    if (sentNotificationsCache.isSent(request.clientId, request.assetId)) {
+                        continue
+                    }
+                    val messageBuilder = MessageBodyBuilder(messageFormat)
+                    val message = messageBuilder
+                            .setClientId(request.clientId)
+                            .setTradeVolumeLimit(maxVolume)
+                            .setTargetAssetId(targetAssetId)
+                            .setAssetId(request.assetId)
+                            .setTimestamp(request.timestamp)
+                            .build()
+
+                    mailNotificationService.sendMail(notificationsConfig.mailAddresses, messageSubject, message)
+                    sentNotificationsCache.add(clientId = request.clientId, assetId = request.assetId)
+                    LOGGER.info(message)
+                } catch (e: Exception) {
+                    LOGGER.error("Error occurred when sending mail notification - volume limit reached for client ${request.clientId}, assetId: ${request.assetId}")
+                }
+            }
+        }
+    }
+
+    class SendNotificationRequest(val clientId: String, val assetId: String, val timestamp: Date)
 }

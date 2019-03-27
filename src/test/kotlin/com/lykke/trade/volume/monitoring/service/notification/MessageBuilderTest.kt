@@ -1,6 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
-import com.lykke.trade.volume.monitoring.service.notification.impl.MessageBuilder
+import com.lykke.trade.volume.monitoring.service.notification.impl.MessageBodyBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -12,11 +12,11 @@ import java.util.*
 
 class MessageBuilderTest {
 
-    private lateinit var messageBuilder: MessageBuilder
+    private lateinit var messageBuilder: MessageBodyBuilder
 
     @Before
     fun init() {
-        messageBuilder = MessageBuilder("%clientId_%tradeVolumeLimit_%targetAssetId_%assetId_%timestamp")
+        messageBuilder = MessageBodyBuilder("%clientId_%tradeVolumeLimit_%targetAssetId_%assetId_%timestamp")
     }
 
     @Test(expected = IllegalArgumentException::class)

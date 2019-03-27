@@ -6,10 +6,13 @@ import com.lykke.trade.volume.monitoring.service.notification.MailNotificationSe
 import com.lykke.trade.volume.monitoring.service.notification.MailValidator
 import com.lykke.trade.volume.monitoring.service.notification.impl.AzureMailNotificationServiceImpl
 import com.lykke.trade.volume.monitoring.service.notification.impl.HttpMailNotificationServiceImpl
+import com.lykke.trade.volume.monitoring.service.notification.impl.NotificationServiceImpl
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 
 @Configuration
 open class MailConfig {
@@ -22,7 +25,7 @@ open class MailConfig {
 
     @Bean
     fun mailNotificationService(
-            @Value("mail.notification.fomat")
+            @Value("\${mail.notification.format}")
             azureMessageFormat: String): MailNotificationService {
         val notificationsConfig = config.tradeVolumeConfig.notificationsConfig
         return when (notificationsConfig.type) {
@@ -32,5 +35,10 @@ open class MailConfig {
                     notificationsConfig.senderAddress)
             MailApiType.PartnersRouterHttpApi -> HttpMailNotificationServiceImpl(notificationsConfig.httpConfig!!, mailValidator)
         }
+    }
+
+    @Bean
+    fun sendNotificationRequestQueue(): BlockingQueue<NotificationServiceImpl.SendNotificationRequest> {
+        return LinkedBlockingQueue()
     }
 }

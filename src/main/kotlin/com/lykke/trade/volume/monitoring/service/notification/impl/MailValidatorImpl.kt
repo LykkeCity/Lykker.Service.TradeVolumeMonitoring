@@ -9,9 +9,9 @@ import java.lang.IllegalArgumentException
 @Component
 class MailValidatorImpl : MailValidator {
     override fun validate(emailAddresses: List<String>, subject: String, textBody: String) {
-        emailAddresses.forEach { mail ->
-            if (!EmailValidator.getInstance().isValid(mail)) {
-                throw IllegalArgumentException("Mail mail address is invalid, mail can not be sent, subject $subject")
+        emailAddresses.forEach { mailAddress ->
+            if (!EmailValidator.getInstance().isValid(mailAddress)) {
+                throw IllegalArgumentException("Mail address: $mailAddress is invalid, message with subject: $subject can not be sent")
             }
         }
 

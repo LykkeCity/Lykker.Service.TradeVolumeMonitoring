@@ -12,6 +12,8 @@ import org.mockito.Mock
 import org.mockito.Mockito.never
 import org.mockito.junit.MockitoJUnitRunner
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
 
 @RunWith(MockitoJUnitRunner::class)
 class NotificationServiceTest {
@@ -38,7 +40,9 @@ class NotificationServiceTest {
                 notificationsConfig,
                 maxVolume,
                 targetAssetId,
-                sentNotificationsCache)
+                sentNotificationsCache,
+                Executors.newCachedThreadPool(),
+                LinkedBlockingQueue())
 
         //when
         notificationService.sendTradeVolumeLimitReachedMailNotification(clientId, assetId, Date())

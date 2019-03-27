@@ -40,7 +40,6 @@ class HttpMailNotificationServiceImpl(httpConfig: HttpApiConfig,
         emailMessage.textBody = textBody
 
         emailSendRequest.message = emailMessage
-        client.apiEmailSendPost(emailSendRequest)
         return emailSendRequest
     }
 }

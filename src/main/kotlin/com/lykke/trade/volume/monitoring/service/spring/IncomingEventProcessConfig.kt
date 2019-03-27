@@ -67,6 +67,17 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
 
     @Bean
+    fun applicationThreadPool(@Value("\${concurrent.application.pool.core.size}") corePoolSize: Int,
+                             @Value("\${concurrent.application.pool.max.size}") maxPoolSize: Int): TaskExecutor {
+        return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(corePoolSize,
+                maxPoolSize,
+                60L,
+                TimeUnit.SECONDS,
+                SynchronousQueue<Runnable>(),
+                "application-pool-thread-%d"))
+     }
+
+    @Bean
     fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
         val size = config.tradeVolumeConfig.threadsNumber * 2
         return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(size,

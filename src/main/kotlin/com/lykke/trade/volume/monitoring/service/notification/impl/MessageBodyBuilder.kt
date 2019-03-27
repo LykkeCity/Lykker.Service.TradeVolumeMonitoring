@@ -7,13 +7,14 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class MessageBuilder(private val format: String) {
+class MessageBodyBuilder(private val format: String) {
     private companion object {
         val CLIENT_ID = "clientId"
         val TRADE_VOLUME_LIMIT = "tradeVolumeLimit"
         val TARGET_ASSET_ID = "targetAssetId"
         val ASSET_ID = "assetId"
         val TIMESTAMP = "timestamp"
+        val DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
         val REQUIRED_PARAMS = setOf(CLIENT_ID, TRADE_VOLUME_LIMIT, TARGET_ASSET_ID, ASSET_ID, TIMESTAMP)
 
@@ -22,29 +23,29 @@ class MessageBuilder(private val format: String) {
 
     private val env = HashMap<String, String>()
 
-    fun setTimestamp(timestamp: Date): MessageBuilder {
+    fun setTimestamp(timestamp: Date): MessageBodyBuilder {
         env[TIMESTAMP] = ZonedDateTime
                 .ofInstant(timestamp.toInstant(), ZoneId.systemDefault())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+                .format(DateTimeFormatter.ofPattern(DATE_FORMAT))
         return this
     }
 
-    fun setClientId(clientId: String): MessageBuilder {
+    fun setClientId(clientId: String): MessageBodyBuilder {
         env[CLIENT_ID] = clientId
         return this
     }
 
-    fun setTradeVolumeLimit(tradeVolumeLimit: Long): MessageBuilder {
+    fun setTradeVolumeLimit(tradeVolumeLimit: Long): MessageBodyBuilder {
         env[TRADE_VOLUME_LIMIT] = tradeVolumeLimit.toString()
         return this
     }
 
-    fun setTargetAssetId(targetAssetId: String): MessageBuilder {
+    fun setTargetAssetId(targetAssetId: String): MessageBodyBuilder {
         env[TARGET_ASSET_ID] = targetAssetId
         return this
     }
 
-    fun setAssetId(assetId: String): MessageBuilder {
+    fun setAssetId(assetId: String): MessageBodyBuilder {
         env[ASSET_ID] = assetId
         return this
     }

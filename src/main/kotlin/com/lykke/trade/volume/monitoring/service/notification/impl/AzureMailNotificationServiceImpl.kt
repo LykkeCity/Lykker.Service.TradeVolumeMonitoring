@@ -20,7 +20,7 @@ class AzureMailNotificationServiceImpl(
 
     init {
         if (!mailQueue.exists()) {
-            throw IllegalArgumentException("Emails queue does not exists")
+            throw IllegalArgumentException("Emails queue does not exist")
         }
     }
 

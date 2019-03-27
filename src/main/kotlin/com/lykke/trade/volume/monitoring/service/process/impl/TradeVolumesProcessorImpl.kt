@@ -70,7 +70,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                 tradeVolume.timestamp)
     }
 
-    fun sendMailNotificationsIfNeeded(eventSequenceNumber: Long, clientId: String, assetId: String, volumes: List<Pair<Long, BigDecimal>>) {
+    private fun sendMailNotificationsIfNeeded(eventSequenceNumber: Long, clientId: String, assetId: String, volumes: List<Pair<Long, BigDecimal>>) {
         volumes.forEach {volume ->
             if(volume.second >= maxVolume) {
                 LOGGER.info(eventSequenceNumber, "Trade volume limit reached for client $clientId, assetId: $assetId")
