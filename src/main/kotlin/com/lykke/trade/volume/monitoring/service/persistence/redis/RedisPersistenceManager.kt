@@ -1,7 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.persistence.redis
 
 import com.lykke.trade.volume.monitoring.service.config.RedisConfig
-import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.persistence.redis.utils.RedisUtils
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
@@ -16,28 +16,34 @@ class RedisPersistenceManager(private val redisConfig: RedisConfig,
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(RedisPersistenceManager::class.java.name)
         private val DATE_FORMAT = SimpleDateFormat("yyyyMMddHH")
-        private const val PREFIX = "event"
-        private const val SEPARATOR = ":"
+
+        const val PREFIX = "event:"
+        val fstConfiguration: FSTConfiguration = FSTConfiguration.createJsonConfiguration()
+    }
+
+    init {
+        LOGGER.info(null, "Initialized with config: $redisConfig, ttl: $ttl sec")
     }
 
     private val jedisThreadLocal = ThreadLocal<Jedis>()
-    private var conf = FSTConfiguration.createJsonConfiguration()
 
-    override fun persist(data: PersistenceData) {
+    override fun persist(eventPersistenceData: EventPersistenceData) {
         try {
-            persist(getJedis(), data)
+            persist(getJedis(), eventPersistenceData)
         } catch (e: JedisException) {
-            LOGGER.error(data.eventSequenceNumber, "Unable to persist data (${e.message}), retry...")
+            LOGGER.error(eventPersistenceData.sequenceNumber, "Unable to persist data (${e.message}), retry...")
             jedisThreadLocal.set(null)
-            persist(getJedis(), data)
-            LOGGER.info(data.eventSequenceNumber, "Successful persistence retry")
+            persist(getJedis(), eventPersistenceData)
+            LOGGER.info(eventPersistenceData.sequenceNumber, "Successful persistence retry")
         }
     }
 
-    private fun persist(jedis: Jedis, data: PersistenceData) {
+    private fun persist(jedis: Jedis, eventPersistenceData: EventPersistenceData) {
         jedis.multi().use { transaction ->
             transaction.select(redisConfig.databaseIndex)
-            RedisUtils.performAtomicSaveSetExpire(transaction, getKey(data), conf.asJsonString(data), ttl)
+            RedisUtils.performAtomicSaveSetExpire(transaction,
+                    getKey(eventPersistenceData),
+                    fstConfiguration.asJsonString(eventPersistenceData), ttl)
             transaction.exec()
         }
     }
@@ -57,7 +63,7 @@ class RedisPersistenceManager(private val redisConfig: RedisConfig,
         return jedis
     }
 
-    private fun getKey(data: PersistenceData): String {
-        return PREFIX + SEPARATOR + DATE_FORMAT.format(data.timestamp)
+    private fun getKey(eventPersistenceData: EventPersistenceData): String {
+        return PREFIX + DATE_FORMAT.format(eventPersistenceData.timestamp)
     }
 }

@@ -2,18 +2,54 @@ package com.lykke.trade.volume.monitoring.service.entity.impl
 
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
-import java.util.*
+import java.util.ArrayList
+import java.util.Comparator
+import java.util.Date
+import java.util.NavigableSet
+import java.util.TreeSet
 import java.util.concurrent.ConcurrentHashMap
+import javax.annotation.PostConstruct
 
 @Component
-class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}") val  cacheConfig: TradeVolumeCacheConfig) : TradeVolumeCache {
+class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}")
+                           private val cacheConfig: TradeVolumeCacheConfig,
+                           private val loader: EventsLoader) : TradeVolumeCache {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger(TradeVolumeCacheImpl::class.java.name)
+    }
+
     private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()
+
+    @PostConstruct
+    fun init() {
+        val allPersistenceData = loader.loadEvents()
+        allPersistenceData.forEach { persistenceData ->
+            persistenceData.tradeVolumes.forEach { tradeVolumesPersistenceData ->
+                add(persistenceData.sequenceNumber,
+                        tradeVolumesPersistenceData.tradeIdx,
+                        tradeVolumesPersistenceData.clientId,
+                        tradeVolumesPersistenceData.assetId,
+                        tradeVolumesPersistenceData.targetAssetVolume,
+                        tradeVolumesPersistenceData.timestamp)
+            }
+        }
+        LOGGER.info("Initialized with events: ${allPersistenceData.size}" +
+                ", tradeVolumes: ${allPersistenceData.flatMap { it.tradeVolumes }.size}")
+
+        cleanCache()
+
+        LOGGER.info("Trade volumes after initial cleaning cache: " +
+                "${tradeVolumesByClientIdByAssetId.flatMap { it.value }.size}")
+    }
 
     override fun add(eventSequenceNumber: Long,
                      tradeIdx: Int,
@@ -43,6 +79,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
                 }
             }
         }
+        LOGGER.debug("Trade volumes after cleaning cache: ${tradeVolumesByClientIdByAssetId.flatMap { it.value }.size}")
     }
 
     private fun removeOldVolumes(volumes: NavigableSet<Volume>) {
@@ -56,11 +93,20 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
             volume.timestamp.time <= Date().time - cacheConfig.expiryRatio * cacheConfig.volumePeriod
 
     private fun getCumulativeVolumeForTradeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal {
-        val higherVolume = volumes.higher(volume)
-        return if (higherVolume != null) {
-            cumulativeVolumeByTradeVolume[getVolumeKey(higherVolume)]!!.add(volume.volume)
+        val cumulativeVolume = getCumulativeVolume(volume, volumes)
+
+        return if (cumulativeVolume != null) {
+            cumulativeVolume.add(volume.volume)
         } else {
             volume.volume
+        }
+    }
+
+    private fun getCumulativeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal? {
+        return volumes.higher(volume)?.let {
+            cumulativeVolumeByTradeVolume[getVolumeKey(it)]!!
+        } ?: volumes.lower(volume)?.let {
+            cumulativeVolumeByTradeVolume[getVolumeKey(it)]!!.subtract(it.volume)
         }
     }
 

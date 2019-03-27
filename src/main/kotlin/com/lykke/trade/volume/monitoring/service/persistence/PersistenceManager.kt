@@ -1,7 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.persistence
 
-import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 
 interface PersistenceManager {
-    fun persist(data: PersistenceData)
+    fun persist(eventPersistenceData: EventPersistenceData)
 }

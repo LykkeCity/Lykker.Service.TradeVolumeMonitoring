@@ -30,7 +30,6 @@ import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetPairs
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
-import com.lykke.trade.volume.monitoring.service.persistence.redis.RedisPersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
@@ -63,7 +62,6 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class IncomingEventProcessConfig : BeanFactoryPostProcessor {
-
 
     @Bean
     fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
@@ -182,16 +180,6 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     @Bean
     fun executionEventProcessor(): ExecutionEventProcessor {
         return ProtoExecutionEventProcessor()
-    }
-
-    @Bean
-    fun redisPersistenceManager(config: Config): RedisPersistenceManager {
-        val redisConfig = config.tradeVolumeConfig.redis
-        var ttl = TimeUnit.MILLISECONDS.toHours(config.tradeVolumeConfig.tradeVolumeCacheConfig.volumePeriod) * 2
-        if (ttl == 0L) {
-            ttl = 1
-        }
-        return RedisPersistenceManager(redisConfig, TimeUnit.HOURS.toSeconds(ttl).toInt())
     }
 
     @Bean

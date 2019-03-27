@@ -1,7 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.process.impl
 
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
@@ -34,16 +34,16 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                         e)
             }
         }
-        persist(PersistenceData(eventTradeVolumesWrapper.eventSequenceNumber,
+        persist(EventPersistenceData(eventTradeVolumesWrapper.eventSequenceNumber,
                 eventTradeVolumesWrapper.eventTimestamp,
                 tradeVolumesPersistenceData))
     }
 
-    private fun persist(persistenceData: PersistenceData) {
+    private fun persist(eventPersistenceData: EventPersistenceData) {
         try {
-            persistenceManager.persist(persistenceData)
+            persistenceManager.persist(eventPersistenceData)
         } catch (e: Exception) {
-            LOGGER.error(persistenceData.eventSequenceNumber, "Unable to persist data: ${e.message}", e)
+            LOGGER.error(eventPersistenceData.sequenceNumber, "Unable to persist data: ${e.message}", e)
         }
     }
 

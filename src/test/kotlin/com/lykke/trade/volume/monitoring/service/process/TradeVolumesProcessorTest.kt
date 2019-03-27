@@ -2,7 +2,7 @@ package com.lykke.trade.volume.monitoring.service.process
 
 import com.lykke.trade.volume.monitoring.service.assertEquals
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
@@ -64,7 +64,7 @@ class TradeVolumesProcessorTest {
 
         assertEquals(1, persistenceManager.data.size)
         val persistenceData = persistenceManager.data.single()
-        assertEquals(1234, persistenceData.eventSequenceNumber)
+        assertEquals(1234, persistenceData.sequenceNumber)
         assertEquals(4, persistenceData.tradeVolumes.size)
 
         assertTradeVolumePersistenceData(TradeVolumePersistenceData(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
@@ -113,9 +113,9 @@ class TradeVolumesProcessorTest {
     }
 
     private class PersistenceManagerStub : PersistenceManager {
-        val data = mutableListOf<PersistenceData>()
-        override fun persist(data: PersistenceData) {
-            this.data.add(data)
+        val data = mutableListOf<EventPersistenceData>()
+        override fun persist(eventPersistenceData: EventPersistenceData) {
+            this.data.add(eventPersistenceData)
         }
     }
 }
