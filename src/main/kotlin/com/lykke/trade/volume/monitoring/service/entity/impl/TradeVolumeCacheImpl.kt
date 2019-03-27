@@ -31,7 +31,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
 
     @PostConstruct
     fun init() {
-        val allPersistenceData = loader.loadEvents()
+        val allPersistenceData = loader.loadEvents().sortedBy { it.timestamp }
         allPersistenceData.forEach { persistenceData ->
             persistenceData.tradeVolumes.forEach { tradeVolumesPersistenceData ->
                 add(persistenceData.sequenceNumber,

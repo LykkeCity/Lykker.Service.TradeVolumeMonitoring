@@ -7,7 +7,7 @@ import redis.clients.jedis.Transaction
 class RedisUtils {
     companion object {
         private val LUA_ATOMIC_SAVE_SET_EXPIRE_SCRIPT = """local firstSave = redis.call('exists', KEYS[1])
-            |redis.call('sadd', KEYS[1], ARGV[1])
+            |redis.call('rpush', KEYS[1], ARGV[1])
             |if firstSave == 0
             |then redis.call('expire', KEYS[1], ARGV[2])
             |end""".trimMargin()
