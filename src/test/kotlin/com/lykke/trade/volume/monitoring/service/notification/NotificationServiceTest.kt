@@ -6,11 +6,13 @@ import com.lykke.trade.volume.monitoring.service.notification.impl.NotificationS
 import com.nhaarman.mockito_kotlin.eq
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito.never
 import org.mockito.junit.MockitoJUnitRunner
+import org.springframework.util.ReflectionUtils
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -24,17 +26,20 @@ class NotificationServiceTest {
     @Mock
     private lateinit var sentNotificationsCache: SentNotificationsCache
 
-    @Test
-    fun sendNotification() {
-        //given
+    private lateinit var notificationService: NotificationService
+
+    private companion object {
         val targetAssetId = "USD"
         val maxVolume: Long = 100
         val clientId = "testClient"
         val assetId = "BTC"
-
         val messageSubject = "testSubject"
         val notificationsConfig = getConfig().tradeVolumeConfig.notificationsConfig
-        val notificationService = NotificationServiceImpl("%clientId_%tradeVolumeLimit_%targetAssetId_%assetId",
+    }
+
+    @Before
+    fun init() {
+        notificationService = NotificationServiceImpl("%clientId_%tradeVolumeLimit_%targetAssetId_%assetId",
                 messageSubject,
                 mailNotificationService,
                 notificationsConfig,
@@ -44,8 +49,16 @@ class NotificationServiceTest {
                 Executors.newCachedThreadPool(),
                 LinkedBlockingQueue())
 
+        val initMethod = ReflectionUtils.findMethod(NotificationServiceImpl::class.java, "init")
+        initMethod!!.isAccessible = true
+        initMethod.invoke(notificationService)
+    }
+
+    @Test
+    fun sendNotification() {
         //when
         notificationService.sendTradeVolumeLimitReachedMailNotification(clientId, assetId, Date())
+        Thread.sleep(200)
 
         //then
         verify(mailNotificationService).sendMail(notificationsConfig.mailAddresses, messageSubject, "${clientId}_${maxVolume}_${targetAssetId}_$assetId")
@@ -55,24 +68,11 @@ class NotificationServiceTest {
     @Test
     fun testNotificationNotSentIfItWasAlreadySent() {
         //given
-        val targetAssetId = "USD"
-        val maxVolume: Long = 100
-        val clientId = "testClient"
-        val assetId = "BTC"
-
-        val messageSubject = "testSubject"
-        val notificationsConfig = getConfig().tradeVolumeConfig.notificationsConfig
-        val notificationService = NotificationServiceImpl("%clientId_%tradeVolumeLimit_%targetAssetId_%assetId",
-                messageSubject,
-                mailNotificationService,
-                notificationsConfig,
-                maxVolume,
-                targetAssetId,
-                sentNotificationsCache)
         whenever(sentNotificationsCache.isSent(eq(clientId), eq(assetId))).thenReturn(true)
 
         //when
         notificationService.sendTradeVolumeLimitReachedMailNotification(clientId, assetId, Date())
+        Thread.sleep(200)
 
         //then
         verify(mailNotificationService, never()).sendMail(notificationsConfig.mailAddresses, messageSubject, "${clientId}_${maxVolume}_${targetAssetId}_$assetId")
