@@ -18,7 +18,7 @@ class RedisEventsLoader(private val redisConfig: RedisConfig) : EventsLoader {
             jedis.select(redisConfig.databaseIndex)
             val keys = jedis.keys("${RedisPersistenceManager.PREFIX}*")
             val result = keys
-                    .flatMap { jedis.smembers(it) }
+                    .flatMap { jedis.lrange(it, 0, -1) }
                     .map { RedisPersistenceManager.fstConfiguration.asObject(it.toByteArray()) as EventPersistenceData }
             LOGGER.info("Loaded ${result.size} events from redis")
             return result
