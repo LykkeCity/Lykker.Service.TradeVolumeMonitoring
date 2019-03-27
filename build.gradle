@@ -88,7 +88,7 @@ ext {
     kotlin_version = '1.2.10'
     kotlin_utils_version = '0.0.13-SNAPSHOT'
     gson_version = '2.8.1'
-    me_message_subscriber_version = '1.0.4-SNAPSHOT'
+    me_message_subscriber_version = '1.0.5-SNAPSHOT'
 
     okhttp_version = '2.7.5'
 }
