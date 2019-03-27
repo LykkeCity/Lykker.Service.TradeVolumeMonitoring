@@ -28,6 +28,18 @@
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
             </Policies>
         </RollingRandomAccessFile>
+
+        <RollingRandomAccessFile name="MailLog"
+                                 filePattern="../log/mailLog.log.%d{yyyy-MM-dd}"
+                                 fileName="../log/mailLog.log"
+                                 immediateFlush="true">
+            <PatternLayout>
+                <Pattern>%d{dd-MM HH:mm:ss:SSS} %p [%t] [%c{1}] %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+        </RollingRandomAccessFile>
     </Appenders>
     <Loggers>
         <AsyncRoot level="info" additivity="false">
@@ -38,6 +50,10 @@
         <AsyncLogger name="com.lykke.trade.volume.monitoring.service.process" level="debug" additivity="false">
             <AppenderRef ref="IncomingEventProcessLog"/>
         </AsyncLogger>
+
+        <Logger name="com.lykke.trade.volume.monitoring.service.notification.impl.NotificationServiceImpl" level="info">
+            <AppenderRef ref="MailLog"/>
+        </Logger>
 
         <Logger name="AppStarter" additivity="false">
             <AppenderRef ref="ServerLog"/>

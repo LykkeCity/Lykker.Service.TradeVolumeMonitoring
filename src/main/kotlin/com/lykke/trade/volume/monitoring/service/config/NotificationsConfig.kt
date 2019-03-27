@@ -1,3 +1,11 @@
 package com.lykke.trade.volume.monitoring.service.config
 
-class NotificationsConfig (val throttlingPeriod: Long)
+import com.lykke.trade.volume.monitoring.service.entity.MailApiType
+
+class NotificationsConfig(
+        val type: MailApiType,
+        val azureConfig: AzureNotificationConfig?,
+        val httpConfig: HttpApiConfig?,
+        val throttlingPeriod: Long,
+        val senderAddress: String,
+        val mailAddresses: List<String>)
