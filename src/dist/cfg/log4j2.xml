@@ -51,7 +51,9 @@
             <AppenderRef ref="IncomingEventProcessLog"/>
         </AsyncLogger>
 
-        <Logger name="com.lykke.trade.volume.monitoring.service.notification.impl.NotificationServiceImpl" level="info">
+        <Logger name="com.lykke.trade.volume.monitoring.service.notification.impl.NotificationServiceImpl"
+                level="info"
+                additivity="false">
             <AppenderRef ref="MailLog"/>
         </Logger>
 

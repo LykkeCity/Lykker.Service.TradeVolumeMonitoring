@@ -1,11 +1,11 @@
 package com.lykke.trade.volume.monitoring.service.notification.impl
 
 import com.lykke.trade.volume.monitoring.service.config.HttpApiConfig
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.ApiClient
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api.EmailApi
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.EmailAddressee
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.EmailMessage
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.EmailSendRequest
+import com.lykke.trade.volume.monitoring.service.http.generated.client.ApiClient
+import com.lykke.trade.volume.monitoring.service.http.generated.client.api.EmailApi
+import com.lykke.trade.volume.monitoring.service.http.generated.client.model.EmailAddressee
+import com.lykke.trade.volume.monitoring.service.http.generated.client.model.EmailMessage
+import com.lykke.trade.volume.monitoring.service.http.generated.client.model.EmailSendRequest
 import com.lykke.trade.volume.monitoring.service.notification.MailNotificationService
 import com.lykke.trade.volume.monitoring.service.notification.MailValidator
 

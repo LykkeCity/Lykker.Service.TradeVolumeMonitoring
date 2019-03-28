@@ -45,9 +45,9 @@ task generateApi {
             config.setOutputDir(swaggerOutputDir.path)
             config.setLang('java')
             config.setAdditionalProperties([
-                    'invokerPackage': 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client',
-                    'modelPackage'  : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model',
-                    'apiPackage'    : 'com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api',
+                    'invokerPackage': 'com.lykke.trade.volume.monitoring.service.http.generated.client',
+                    'modelPackage'  : 'com.lykke.trade.volume.monitoring.service.http.generated.client.model',
+                    'apiPackage'    : 'com.lykke.trade.volume.monitoring.service.http.generated.client.api',
                     'dateLibrary'   : 'java8'
             ])
             new DefaultGenerator().opts(config.toClientOptInput()).generate()
