@@ -2,9 +2,11 @@ package com.lykke.trade.volume.monitoring.service.spring
 
 import com.lykke.client.accounts.ClientAccountCacheFactory
 import com.lykke.client.accounts.ClientAccountsCache
+import com.lykke.client.accounts.config.RabbitMqConfig
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,6 +28,9 @@ open class ApplicationConfig : EnvironmentAware {
     }
 
     private lateinit var environment: Environment
+
+    @Autowired
+    private lateinit var config: Config
 
     override fun setEnvironment(environment: Environment) {
         this.environment = environment
@@ -60,7 +65,9 @@ open class ApplicationConfig : EnvironmentAware {
 
     @Bean
     open fun clientAccountsCache (): ClientAccountsCache {
-        ClientAccountCacheFactory.get(ClientsAccountsConfig())
+        val clientAccountsConfig = config.tradeVolumeConfig.clientAccountsConfig
+        ClientAccountCacheFactory.get(ClientsAccountsConfig(RabbitMqConfig(),
+                ClientsAccountsHttpConfig()))
     }
 
 }

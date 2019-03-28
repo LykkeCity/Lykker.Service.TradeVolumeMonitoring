@@ -5,7 +5,7 @@ import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
 import java.math.BigDecimal
 
 class TradeVolumeConfig(val tradeVolumeCacheConfig: TradeVolumeCacheConfig,
-                        val clientAccountsCacheConfig: ClientAccountsCacheConfig,
+                        val clientAccountsConfig: ClientAccountsConfig,
                         val notificationsConfig: NotificationsConfig,
                         val maxVolume: BigDecimal,
                         val assetId: String,
