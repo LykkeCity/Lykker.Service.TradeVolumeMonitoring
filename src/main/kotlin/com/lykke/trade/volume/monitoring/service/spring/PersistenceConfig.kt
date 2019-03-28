@@ -4,6 +4,8 @@ import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import com.lykke.trade.volume.monitoring.service.loader.redis.RedisEventsLoader
 import com.lykke.trade.volume.monitoring.service.persistence.redis.RedisPersistenceManager
+import com.lykke.trade.volume.monitoring.service.persistence.serialization.EventPersistenceDataSerializer
+import com.lykke.trade.volume.monitoring.service.persistence.serialization.fst.FstEventPersistenceDataSerializer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
@@ -11,16 +13,30 @@ import java.util.concurrent.TimeUnit
 @Configuration
 class PersistenceConfig {
 
-    @Bean
-    fun redisPersistenceManager(config: Config): RedisPersistenceManager {
-        val redisConfig = config.tradeVolumeConfig.redis
-        val tradeVolumeCacheConfig = config.tradeVolumeConfig.tradeVolumeCacheConfig
-        val ttlMs = Math.max(tradeVolumeCacheConfig.volumePeriod * tradeVolumeCacheConfig.expiryRatio, TimeUnit.HOURS.toMillis(2))
-        return RedisPersistenceManager(redisConfig, TimeUnit.MILLISECONDS.toSeconds(ttlMs).toInt())
+    companion object {
+        private val MIN_TTL_MS = TimeUnit.HOURS.toMillis(2)
     }
 
     @Bean
-    fun eventsLoader(config: Config): EventsLoader {
-        return RedisEventsLoader(config.tradeVolumeConfig.redis)
+    fun eventPersistenceDataSerializer(): EventPersistenceDataSerializer {
+        return FstEventPersistenceDataSerializer()
+    }
+
+    @Bean
+    fun redisPersistenceManager(config: Config,
+                                eventPersistenceDataSerializer: EventPersistenceDataSerializer): RedisPersistenceManager {
+        val redisConfig = config.tradeVolumeConfig.redis
+        val tradeVolumeCacheConfig = config.tradeVolumeConfig.tradeVolumeCacheConfig
+        val ttlMs = Math.max(tradeVolumeCacheConfig.volumePeriod * tradeVolumeCacheConfig.expiryRatio, MIN_TTL_MS)
+        return RedisPersistenceManager(redisConfig,
+                TimeUnit.MILLISECONDS.toSeconds(ttlMs).toInt(),
+                eventPersistenceDataSerializer)
+    }
+
+    @Bean
+    fun eventsLoader(config: Config,
+                     eventPersistenceDataSerializer: EventPersistenceDataSerializer): EventsLoader {
+        return RedisEventsLoader(config.tradeVolumeConfig.redis,
+                eventPersistenceDataSerializer)
     }
 }

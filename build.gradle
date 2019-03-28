@@ -91,6 +91,8 @@ ext {
     me_message_subscriber_version = '1.0.4-SNAPSHOT'
 
     okhttp_version = '2.7.5'
+    fst_version = '2.52'
+    redis_version = '2.9.0'
 }
 
 configurations {
@@ -117,8 +119,8 @@ dependencies {
     compile "io.springfox:springfox-swagger2:$springfox_swagger2"
     compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
 
-    compile "de.ruedigermoeller:fst:2.52"
-    compile "redis.clients:jedis:2.9.0"
+    compile "de.ruedigermoeller:fst:$fst_version"
+    compile "redis.clients:jedis:$redis_version"
 
     runtime "com.squareup.okhttp:okhttp:$okhttp_version"
     runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"
