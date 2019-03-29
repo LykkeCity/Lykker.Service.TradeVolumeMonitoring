@@ -2,9 +2,9 @@ package com.lykke.trade.volume.monitoring.service.loader.http
 
 import com.lykke.trade.volume.monitoring.service.entity.Asset
 import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.ApiClient
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.api.AssetsApi
-import com.lykke.trade.volume.monitoring.service.loader.http.generated.client.model.ApiAsset
+import com.lykke.trade.volume.monitoring.service.http.generated.client.ApiClient
+import com.lykke.trade.volume.monitoring.service.http.generated.client.api.AssetsApi
+import com.lykke.trade.volume.monitoring.service.http.generated.client.model.ApiAsset
 
 class PublicApiAssetsLoader(publicApiUrl: String) : AssetsLoader {
 

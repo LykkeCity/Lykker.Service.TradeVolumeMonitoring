@@ -1,4 +1,4 @@
-package com.lykke.trade.volume.monitoring.service.notification
+package com.lykke.trade.volume.monitoring.service.cache
 
 interface SentNotificationsCache {
     fun add(clientId: String, assetId: String)

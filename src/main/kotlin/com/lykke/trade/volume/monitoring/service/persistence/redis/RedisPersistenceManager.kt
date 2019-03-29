@@ -4,66 +4,83 @@ import com.lykke.trade.volume.monitoring.service.config.RedisConfig
 import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.persistence.redis.utils.RedisUtils
+import com.lykke.trade.volume.monitoring.service.persistence.serialization.EventPersistenceDataSerializer
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
-import org.nustaq.serialization.FSTConfiguration
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.exceptions.JedisException
+import java.text.Format
 import java.text.SimpleDateFormat
+import kotlin.concurrent.getOrSet
 
 class RedisPersistenceManager(private val redisConfig: RedisConfig,
-                              private val ttl: Int) : PersistenceManager {
+                              ttl: Int,
+                              private val serializer: EventPersistenceDataSerializer) : PersistenceManager {
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(RedisPersistenceManager::class.java.name)
-        private val DATE_FORMAT = SimpleDateFormat("yyyyMMddHH")
-
+        private const val DATE_FORMAT_PATTERN = "yyyyMMddHH"
         const val PREFIX = "event:"
-        val fstConfiguration: FSTConfiguration = FSTConfiguration.createJsonConfiguration()
     }
+
+    private val ttlByteArray = ttl.toString().toByteArray()
 
     init {
         LOGGER.info(null, "Initialized with config: $redisConfig, ttl: $ttl sec")
     }
 
     private val jedisThreadLocal = ThreadLocal<Jedis>()
+    private val dateFormatThreadLocal = ThreadLocal<Format>()
 
     override fun persist(eventPersistenceData: EventPersistenceData) {
         try {
             persist(getJedis(), eventPersistenceData)
         } catch (e: JedisException) {
             LOGGER.error(eventPersistenceData.sequenceNumber, "Unable to persist data (${e.message}), retry...")
-            jedisThreadLocal.set(null)
+            closeJedis(eventPersistenceData.sequenceNumber)
             persist(getJedis(), eventPersistenceData)
             LOGGER.info(eventPersistenceData.sequenceNumber, "Successful persistence retry")
         }
     }
 
     private fun persist(jedis: Jedis, eventPersistenceData: EventPersistenceData) {
-        jedis.multi().use { transaction ->
-            transaction.select(redisConfig.databaseIndex)
-            RedisUtils.performAtomicSaveSetExpire(transaction,
-                    getKey(eventPersistenceData),
-                    fstConfiguration.asJsonString(eventPersistenceData), ttl)
-            transaction.exec()
-        }
+        RedisUtils.performAtomicSaveSetExpire(jedis,
+                getKey(eventPersistenceData),
+                serializer.serialize(eventPersistenceData),
+                ttlByteArray)
     }
 
     private fun getJedis(): Jedis {
-        var jedis = jedisThreadLocal.get()
-        if (jedis == null) {
-            jedis = openRedisConnection()
-            jedisThreadLocal.set(jedis)
+        return jedisThreadLocal.getOrSet {
+            openRedisConnection()
         }
-        return jedis
+    }
+
+    private fun closeJedis(eventSequenceNumber: Long) {
+        try {
+            jedisThreadLocal.get()?.close()
+        } catch (e: Exception) {
+            LOGGER.error(eventSequenceNumber,
+                    "Unable to close redis connection: ${e.message}",
+                    e)
+        } finally {
+            jedisThreadLocal.set(null)
+        }
     }
 
     private fun openRedisConnection(): Jedis {
         val jedis = RedisUtils.openRedisConnection(redisConfig)
+        jedis.select(redisConfig.databaseIndex)
         LOGGER.info(null, "Created redis connection")
         return jedis
     }
 
-    private fun getKey(eventPersistenceData: EventPersistenceData): String {
-        return PREFIX + DATE_FORMAT.format(eventPersistenceData.timestamp)
+    private fun getKey(eventPersistenceData: EventPersistenceData): ByteArray {
+        return (PREFIX + getDateFormat().format(eventPersistenceData.timestamp)).toByteArray()
+    }
+
+    private fun getDateFormat(): Format {
+        return dateFormatThreadLocal.getOrSet {
+            SimpleDateFormat(DATE_FORMAT_PATTERN)
+        }
     }
 }
