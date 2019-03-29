@@ -31,7 +31,6 @@ import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoad
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
-import com.lykke.trade.volume.monitoring.service.persistence.redis.RedisPersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
@@ -64,7 +63,6 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class IncomingEventProcessConfig : BeanFactoryPostProcessor {
-
 
     @Bean
     fun applicationThreadPool(@Value("\${concurrent.application.pool.core.size}") corePoolSize: Int,
@@ -194,11 +192,6 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     @Bean
     fun executionEventProcessor(): ExecutionEventProcessor {
         return ProtoExecutionEventProcessor()
-    }
-
-    @Bean
-    fun persistenceManager(): PersistenceManager {
-        return RedisPersistenceManager()
     }
 
     @Bean

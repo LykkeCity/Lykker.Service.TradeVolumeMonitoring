@@ -2,7 +2,7 @@ package com.lykke.trade.volume.monitoring.service.process
 
 import com.lykke.trade.volume.monitoring.service.assertEquals
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
@@ -18,7 +18,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.stubbing.Answer
 import java.math.BigDecimal
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -66,7 +65,7 @@ class TradeVolumesProcessorTest {
                 TradeVolume(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), Date(date.time + 4 * day))
         )
 
-        processor.process(EventTradeVolumesWrapper(1234, trades))
+        processor.process(EventTradeVolumesWrapper(1234, date, trades))
 
         assertEquals(4, tradeVolumeCache.tradeVolumes.size)
         assertCachedVolume(CachedVolume(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp),
@@ -80,13 +79,13 @@ class TradeVolumesProcessorTest {
 
         assertEquals(1, persistenceManager.data.size)
         val persistenceData = persistenceManager.data.single()
-        assertEquals(1234, persistenceData.eventSequenceNumber)
+        assertEquals(1234, persistenceData.sequenceNumber)
         assertEquals(4, persistenceData.tradeVolumes.size)
 
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 3, "wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp), persistenceData.tradeVolumes[1])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 4, "wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp), persistenceData.tradeVolumes[2])
-        assertTradeVolumePersistenceData(TradeVolumePersistenceData(1234L, 5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp), persistenceData.tradeVolumes[3])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(2, "wallet1", "Asset1", BigDecimal.valueOf(50), trades[2].timestamp), persistenceData.tradeVolumes[0])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(3, "wallet1", "TargetAsset", BigDecimal.valueOf(15), trades[3].timestamp), persistenceData.tradeVolumes[1])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(4, "wallet2", "Asset1", BigDecimal.valueOf(60), trades[4].timestamp), persistenceData.tradeVolumes[2])
+        assertTradeVolumePersistenceData(TradeVolumePersistenceData(5, "wallet2", "TargetAsset", BigDecimal.valueOf(20), trades[5].timestamp), persistenceData.tradeVolumes[3])
     }
 
     @Test
@@ -100,8 +99,8 @@ class TradeVolumesProcessorTest {
         Mockito.`when`(converter.convert(eq("Asset1"), any(), eq("TargetAsset")))
                 .thenAnswer { invocation -> (invocation.arguments[1] as BigDecimal).multiply(BigDecimal.valueOf(2)) }
 
-        processor.process(EventTradeVolumesWrapper(1234, listOf(trades[0])))
-        processor.process(EventTradeVolumesWrapper(1235, listOf(trades[1])))
+        processor.process(EventTradeVolumesWrapper(1234, now, listOf(trades[0])))
+        processor.process(EventTradeVolumesWrapper(1235, now, listOf(trades[1])))
 
         verify(notificationService).sendTradeVolumeLimitReachedMailNotification(eq("wallet1"), eq("Asset1"), eq(trade2))
     }
@@ -140,6 +139,7 @@ class TradeVolumesProcessorTest {
 
     private fun assertTradeVolumePersistenceData(expected: TradeVolumePersistenceData,
                                                  actual: TradeVolumePersistenceData) {
+        assertEquals(expected.tradeIdx, actual.tradeIdx)
         assertEquals(expected.clientId, actual.clientId)
         assertEquals(expected.assetId, actual.assetId)
         assertEquals(expected.targetAssetVolume, actual.targetAssetVolume)
@@ -147,9 +147,9 @@ class TradeVolumesProcessorTest {
     }
 
     private class PersistenceManagerStub : PersistenceManager {
-        val data = mutableListOf<PersistenceData>()
-        override fun persist(data: PersistenceData) {
-            this.data.add(data)
+        val data = mutableListOf<EventPersistenceData>()
+        override fun persist(eventPersistenceData: EventPersistenceData) {
+            this.data.add(eventPersistenceData)
         }
     }
 }

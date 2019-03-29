@@ -98,6 +98,8 @@ ext {
 
     gson_version = '2.8.1'
     okhttp_version = '2.7.5'
+    fst_version = '2.52'
+    redis_version = '2.9.0'
 
     kotlin_mockito_version = '1.6.0'
 }
@@ -123,9 +125,12 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-log4j2")
     compile "com.lmax:disruptor:$lmax_disruptor_version"
     compile "commons-validator:commons-validator:$commons_validator_version"
-
+    
     compile "io.springfox:springfox-swagger2:$springfox_swagger2"
     compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
+
+    compile "de.ruedigermoeller:fst:$fst_version"
+    compile "redis.clients:jedis:$redis_version"
 
     runtime "com.squareup.okhttp:okhttp:$okhttp_version"
     runtime "com.squareup.okhttp:logging-interceptor:$okhttp_version"

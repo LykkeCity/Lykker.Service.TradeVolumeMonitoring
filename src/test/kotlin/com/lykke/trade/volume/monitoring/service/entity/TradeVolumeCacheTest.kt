@@ -3,15 +3,18 @@ package com.lykke.trade.volume.monitoring.service.entity
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.cache.impl.TradeVolumeCacheImpl
 import com.lykke.trade.volume.monitoring.service.getConfig
+import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito
 import java.math.BigDecimal
-import java.util.*
+import java.util.Date
 import kotlin.test.assertEquals
 
 class TradeVolumeCacheTest {
 
     private lateinit var tradeVolumeCache: TradeVolumeCache
+    private var loader = Mockito.mock(EventsLoader::class.java)
     private val CLIENT1 = "CLIENT1"
     private val CLIENT2 = "CLIENT2"
 
@@ -20,7 +23,7 @@ class TradeVolumeCacheTest {
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig)
+        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig, loader)
     }
 
     @Test
@@ -230,4 +233,39 @@ class TradeVolumeCacheTest {
 
         assertEquals(BigDecimal("3"), result.single { it.first == date2.time }.second)
     }
+
+    @Test
+    fun testInitialization() {
+        val date = Date()
+        val date1 = Date(date.time - 1)
+        val date2 = Date(date.time - 2)
+        val date3 = Date(date.time - 3)
+        val oldDate = Date(date.time - 300)
+        Mockito.`when`(loader.loadEvents())
+                .thenReturn(listOf(
+                        EventPersistenceData(1L, date, listOf(
+                                TradeVolumePersistenceData(0, CLIENT1, ASSET1, BigDecimal("1.1"), date1),
+                                TradeVolumePersistenceData(0, CLIENT1, ASSET1, BigDecimal("1.1"), oldDate),
+                                TradeVolumePersistenceData(1, CLIENT1, ASSET1, BigDecimal("2.22"), date2),
+                                TradeVolumePersistenceData(2, CLIENT2, ASSET1, BigDecimal("2.22"), date2)
+                        )),
+                        EventPersistenceData(2L, date3, listOf(
+                                TradeVolumePersistenceData(0, CLIENT1, ASSET1, BigDecimal("3.333"), date3),
+                                TradeVolumePersistenceData(1, CLIENT1, ASSET2, BigDecimal("3.333"), date3)
+                        ))
+                ))
+        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig, loader)
+        (tradeVolumeCache as TradeVolumeCacheImpl).init()
+
+        val date4 = Date(date.time - 4)
+        val result = tradeVolumeCache.add(3L, 0, CLIENT1, ASSET1, BigDecimal("4.4444"), date4)
+
+        assertEquals(4, result.size)
+        assertEquals(BigDecimal("11.0974"), result.single { it.first == date1.time }.second)
+        assertEquals(BigDecimal("9.9974"), result.single { it.first == date2.time }.second)
+        assertEquals(BigDecimal("7.7774"), result.single { it.first == date3.time }.second)
+        assertEquals(BigDecimal("4.4444"), result.single { it.first == date4.time }.second)
+
+    }
+
 }
