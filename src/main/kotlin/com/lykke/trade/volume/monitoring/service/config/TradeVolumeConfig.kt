@@ -13,4 +13,5 @@ class TradeVolumeConfig(val tradeVolumeCacheConfig: TradeVolumeCacheConfig,
                         val assetDictionarySource: AssetDictionarySource,
                         val azureAssetDictionaries: AzureAssetDictionariesConfig?,
                         val publicApiUrl: String,
-                        val threadsNumber: Int)
+                        val threadsNumber: Int,
+                        val redis: RedisConfig)

@@ -7,5 +7,5 @@ class NotificationsConfig(
         val azureConfig: AzureNotificationConfig?,
         val httpConfig: HttpApiConfig?,
         val throttlingPeriod: Long,
-        val senderAddress: String,
+        val senderAddress: String?,
         val mailAddresses: List<String>)

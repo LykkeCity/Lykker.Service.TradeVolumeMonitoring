@@ -25,14 +25,14 @@ open class MailConfig {
 
     @Bean
     fun mailNotificationService(
-            @Value("\${mail.notification.format}")
-            azureMessageFormat: String): MailNotificationService {
+            @Value("\${azure.mail.notification.format:#{null}}")
+            azureMessageFormat: String?): MailNotificationService {
         val notificationsConfig = config.tradeVolumeConfig.notificationsConfig
         return when (notificationsConfig.type) {
             MailApiType.Azure -> AzureMailNotificationServiceImpl(notificationsConfig.azureConfig!!,
-                    azureMessageFormat,
+                    azureMessageFormat!!,
                     mailValidator,
-                    notificationsConfig.senderAddress)
+                    notificationsConfig.senderAddress!!)
             MailApiType.PartnersRouterHttpApi -> HttpMailNotificationServiceImpl(notificationsConfig.httpConfig!!, mailValidator)
         }
     }

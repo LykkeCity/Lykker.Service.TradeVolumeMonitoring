@@ -64,7 +64,7 @@ class NotificationServiceImpl(@Value("\${mail.message.format}") private val mess
                     sentNotificationsCache.add(clientId = request.clientId, assetId = request.assetId)
                     LOGGER.info(message)
                 } catch (e: Exception) {
-                    LOGGER.error("Error occurred when sending mail notification - volume limit reached for client ${request.clientId}, assetId: ${request.assetId}")
+                    LOGGER.error("Error occurred when sending mail notification - volume limit reached for client ${request.clientId}, assetId: ${request.assetId}", e)
                 }
             }
         }

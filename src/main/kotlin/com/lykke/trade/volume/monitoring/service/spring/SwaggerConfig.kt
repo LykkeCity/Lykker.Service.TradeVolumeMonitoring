@@ -27,7 +27,7 @@ open class SwaggerConfig {
                 ))
                 .useDefaultResponseMessages(false)
                 .select()
-                .apis(RequestHandlerSelectors.basePackage("com.lykke.trade.volume.monitoring.web.controllers"))
+                .apis(RequestHandlerSelectors.basePackage("com.lykke.trade.volume.monitoring.service.web.controllers"))
                 .paths(PathSelectors.any())
                 .build()
 
