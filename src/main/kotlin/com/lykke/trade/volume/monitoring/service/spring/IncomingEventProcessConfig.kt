@@ -14,7 +14,7 @@ import com.lykke.trade.volume.monitoring.service.cache.impl.PricesCacheImpl
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.holder.AssetPairsHolder
 import com.lykke.trade.volume.monitoring.service.holder.AssetsHolder
 import com.lykke.trade.volume.monitoring.service.holder.PricesHolder
@@ -29,6 +29,7 @@ import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiAssetsLoader
 import com.lykke.trade.volume.monitoring.service.loader.http.PublicApiRatesLoader
+import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
@@ -62,6 +63,17 @@ import java.util.concurrent.TimeUnit
 
 @Configuration
 class IncomingEventProcessConfig : BeanFactoryPostProcessor {
+
+    @Bean
+    fun applicationThreadPool(@Value("\${concurrent.application.pool.core.size}") corePoolSize: Int,
+                             @Value("\${concurrent.application.pool.max.size}") maxPoolSize: Int): TaskExecutor {
+        return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(corePoolSize,
+                maxPoolSize,
+                60L,
+                TimeUnit.SECONDS,
+                SynchronousQueue<Runnable>(),
+                "application-pool-thread-%d"))
+     }
 
     @Bean
     fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
@@ -191,11 +203,14 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     fun tradeVolumesProcessor(assetVolumeConverter: AssetVolumeConverter,
                               config: Config,
                               persistenceManager: PersistenceManager,
-                              tradeVolumeCache: TradeVolumeCache): TradeVolumesProcessor {
+                              tradeVolumeCache: TradeVolumeCache,
+                              notificationService: NotificationService): TradeVolumesProcessor {
         return TradeVolumesProcessorImpl(config.tradeVolumeConfig.assetId,
                 assetVolumeConverter,
                 persistenceManager,
-                tradeVolumeCache)
+                tradeVolumeCache,
+                config.tradeVolumeConfig.maxVolume,
+                notificationService)
     }
 
     @Bean

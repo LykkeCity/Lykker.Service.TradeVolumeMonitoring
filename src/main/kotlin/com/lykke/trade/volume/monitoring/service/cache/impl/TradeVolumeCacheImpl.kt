@@ -1,7 +1,7 @@
-package com.lykke.trade.volume.monitoring.service.entity.impl
+package com.lykke.trade.volume.monitoring.service.cache.impl
 
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
-import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -24,7 +24,6 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     companion object {
         private val LOGGER = LoggerFactory.getLogger(TradeVolumeCacheImpl::class.java.name)
     }
-
     private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()

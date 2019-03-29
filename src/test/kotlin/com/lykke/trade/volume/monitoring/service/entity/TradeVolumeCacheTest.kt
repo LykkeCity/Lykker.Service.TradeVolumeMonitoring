@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
-import com.lykke.trade.volume.monitoring.service.entity.impl.TradeVolumeCacheImpl
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.cache.impl.TradeVolumeCacheImpl
 import com.lykke.trade.volume.monitoring.service.getConfig
 import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import org.junit.Before
@@ -212,6 +213,25 @@ class TradeVolumeCacheTest {
         val result = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(30), Date(now.time - 10))
         assertEquals(1, result.size)
         assertEquals(BigDecimal.valueOf(40), result.first().second)
+    }
+
+    @Test
+    fun testNotAllExpiredTradeInsertedAtTheEnd() {
+        val now = Date()
+        val oldDate = Date(now.time - 300)
+        val date1 = Date(now.time - 3)
+        val date2 = Date(now.time - 2)
+
+        tradeVolumeCache.add(3, 3, CLIENT1, ASSET1, BigDecimal("2"), date2)
+        tradeVolumeCache.add(1, 1, CLIENT1, ASSET1, BigDecimal("1000"), oldDate)
+
+        val cleanCacheMethod = tradeVolumeCache::class.java.getDeclaredMethod("cleanCache")
+        cleanCacheMethod.isAccessible = true
+        cleanCacheMethod.invoke(tradeVolumeCache)
+
+        val result = tradeVolumeCache.add(2, 2, CLIENT1, ASSET1, BigDecimal("1"), date1)
+
+        assertEquals(BigDecimal("3"), result.single { it.first == date2.time }.second)
     }
 
     @Test
