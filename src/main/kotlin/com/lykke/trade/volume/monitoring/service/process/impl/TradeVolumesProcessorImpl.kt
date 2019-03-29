@@ -79,8 +79,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
 
         sendMailNotificationsIfNeeded(eventSequenceNumber, clientId, tradeVolume.assetId, volumesForThePeriod)
 
-        return TradeVolumePersistenceData(eventSequenceNumber,
-                tradeVolume.tradeIdx,
+        return TradeVolumePersistenceData(tradeVolume.tradeIdx,
                 clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,

@@ -107,8 +107,8 @@ class TradeVolumesProcessorTest {
         Mockito.`when`(converter.convert(eq("Asset1"), any(), eq("TargetAsset")))
                 .thenAnswer { invocation -> (invocation.arguments[1] as BigDecimal).multiply(BigDecimal.valueOf(2)) }
 
-        processor.process(EventTradeVolumesWrapper(1234, listOf(trades[0])))
-        processor.process(EventTradeVolumesWrapper(1235, listOf(trades[1])))
+        processor.process(EventTradeVolumesWrapper(1234, now, listOf(trades[0])))
+        processor.process(EventTradeVolumesWrapper(1235, now, listOf(trades[1])))
 
         verify(notificationService).sendTradeVolumeLimitReachedMailNotification(eq("wallet1"), eq("Asset1"), eq(trade2))
     }
