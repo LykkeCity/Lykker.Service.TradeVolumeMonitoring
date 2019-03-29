@@ -1,7 +1,7 @@
-package com.lykke.trade.volume.monitoring.service.entity.impl
+package com.lykke.trade.volume.monitoring.service.cache.impl
 
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
-import com.lykke.trade.volume.monitoring.service.entity.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -10,7 +10,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}") val  cacheConfig: TradeVolumeCacheConfig) : TradeVolumeCache {
+class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig}") val cacheConfig: TradeVolumeCacheConfig) : TradeVolumeCache {
     private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()
@@ -56,11 +56,20 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
             volume.timestamp.time <= Date().time - cacheConfig.expiryRatio * cacheConfig.volumePeriod
 
     private fun getCumulativeVolumeForTradeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal {
-        val higherVolume = volumes.higher(volume)
-        return if (higherVolume != null) {
-            cumulativeVolumeByTradeVolume[getVolumeKey(higherVolume)]!!.add(volume.volume)
+        val cumulativeVolume = getCumulativeVolume(volume, volumes)
+
+        return if (cumulativeVolume != null) {
+            cumulativeVolume.add(volume.volume)
         } else {
             volume.volume
+        }
+    }
+
+    private fun getCumulativeVolume(volume: Volume, volumes: NavigableSet<Volume>): BigDecimal? {
+        return volumes.higher(volume)?.let {
+            cumulativeVolumeByTradeVolume[getVolumeKey(it)]!!
+        } ?: volumes.lower(volume)?.let {
+            cumulativeVolumeByTradeVolume[getVolumeKey(it)]!!.subtract(it.volume)
         }
     }
 

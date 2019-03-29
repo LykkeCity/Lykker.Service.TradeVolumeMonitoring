@@ -1,6 +1,7 @@
-package com.lykke.trade.volume.monitoring.service.notification
+package com.lykke.trade.volume.monitoring.service.cache.impl
 
 import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
+import com.lykke.trade.volume.monitoring.service.cache.SentNotificationsCache
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

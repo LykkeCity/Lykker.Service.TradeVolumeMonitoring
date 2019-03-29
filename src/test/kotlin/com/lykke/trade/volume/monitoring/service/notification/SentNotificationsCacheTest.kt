@@ -1,6 +1,8 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
+import com.lykke.trade.volume.monitoring.service.cache.SentNotificationsCache
 import com.lykke.trade.volume.monitoring.service.getConfig
+import com.lykke.trade.volume.monitoring.service.cache.impl.SentNotificationsCacheImpl
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before

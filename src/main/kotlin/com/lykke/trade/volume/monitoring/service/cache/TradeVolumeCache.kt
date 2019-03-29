@@ -1,4 +1,4 @@
-package com.lykke.trade.volume.monitoring.service.entity
+package com.lykke.trade.volume.monitoring.service.cache
 
 import java.math.BigDecimal
 import java.util.*
