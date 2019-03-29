@@ -1,9 +1,11 @@
 package com.lykke.trade.volume.monitoring.service
 
 import com.lykke.trade.volume.monitoring.service.config.AzureNotificationConfig
+import com.lykke.trade.volume.monitoring.service.config.ClientAccountsConfig
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.config.HttpApiConfig
 import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
+import com.lykke.trade.volume.monitoring.service.config.RabbitConfig
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeConfig
 import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
@@ -24,6 +26,7 @@ fun assertEquals(expected: BigDecimal?, actual: BigDecimal?, message: String? = 
 fun getConfig(volumePeriod: Long = 100, expiryRatio: Int = 2, cleanVolumeCacheInterval: Long = 100,
               notificationPeriod: Long = 100, maxVolume: BigDecimal = BigDecimal.valueOf(1000)): Config {
     return Config(TradeVolumeConfig(TradeVolumeCacheConfig(volumePeriod, expiryRatio, cleanVolumeCacheInterval),
+            ClientAccountsConfig(RabbitConfig("test", "test", "test", "test"), HttpApiConfig("test", 1000)),
             NotificationsConfig(
                     MailApiType.Azure,
                     AzureNotificationConfig("testConnectionString", "mailQueue"),

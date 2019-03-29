@@ -1,5 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.process
 
+import com.lykke.client.accounts.ClientAccountsCache
 import com.lykke.trade.volume.monitoring.service.assertEquals
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.entity.PersistenceData
@@ -12,13 +13,13 @@ import com.lykke.trade.volume.monitoring.service.process.impl.TradeVolumesProces
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.eq
 import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.whenever
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.stubbing.Answer
 import java.math.BigDecimal
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -37,17 +38,23 @@ class TradeVolumesProcessorTest {
     @Mock
     private lateinit var converter: AssetVolumeConverter
 
+    @Mock
+    private lateinit var clientAccountsCache: ClientAccountsCache
+
     @Before
     fun setUp() {
         Mockito.`when`(converter.convert("Asset1", BigDecimal.valueOf(5), "TargetAsset"))
                 .thenReturn(BigDecimal.valueOf(50), BigDecimal.valueOf(60))
+
+        whenever(clientAccountsCache.getClientByWalletId(any())).thenAnswer { invocation -> invocation.arguments[0] }
 
         processor = TradeVolumesProcessorImpl("TargetAsset",
                 converter,
                 persistenceManager,
                 tradeVolumeCache,
                 BigDecimal.valueOf(200),
-                notificationService)
+                notificationService,
+                clientAccountsCache)
     }
 
     @Test

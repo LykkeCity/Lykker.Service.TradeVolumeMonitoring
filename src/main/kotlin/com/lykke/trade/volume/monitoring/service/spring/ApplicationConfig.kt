@@ -1,8 +1,5 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
-import com.lykke.client.accounts.ClientAccountCacheFactory
-import com.lykke.client.accounts.ClientAccountsCache
-import com.lykke.client.accounts.config.RabbitMqConfig
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.utils.config.ConfigInitializer
 import org.slf4j.LoggerFactory
@@ -16,8 +13,7 @@ import org.springframework.core.env.get
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
-import com.lykke.client.accounts.config.Config as ClientsAccountsConfig
-import com.lykke.client.accounts.config.HttpConfig as ClientsAccountsHttpConfig
+
 
 @Configuration
 @EnableScheduling
@@ -63,11 +59,6 @@ open class ApplicationConfig : EnvironmentAware {
         }
     }
 
-    @Bean
-    open fun clientAccountsCache (): ClientAccountsCache {
-        val clientAccountsConfig = config.tradeVolumeConfig.clientAccountsConfig
-        ClientAccountCacheFactory.get(ClientsAccountsConfig(RabbitMqConfig(),
-                ClientsAccountsHttpConfig()))
-    }
+
 
 }
