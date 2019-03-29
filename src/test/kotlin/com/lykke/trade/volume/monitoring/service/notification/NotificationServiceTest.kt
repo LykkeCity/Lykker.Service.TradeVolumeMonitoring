@@ -1,7 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
+import com.lykke.trade.volume.monitoring.service.buildNotificationConfig
 import com.lykke.trade.volume.monitoring.service.cache.SentNotificationsCache
-import com.lykke.trade.volume.monitoring.service.getConfig
 import com.lykke.trade.volume.monitoring.service.notification.impl.NotificationServiceImpl
 import com.nhaarman.mockito_kotlin.eq
 import com.nhaarman.mockito_kotlin.verify
@@ -29,12 +29,12 @@ class NotificationServiceTest {
     private lateinit var notificationService: NotificationService
 
     private companion object {
-        val targetAssetId = "USD"
-        val maxVolume: Long = 100
-        val clientId = "testClient"
-        val assetId = "BTC"
-        val messageSubject = "testSubject"
-        val notificationsConfig = getConfig().tradeVolumeConfig.notificationsConfig
+        const val targetAssetId = "USD"
+        const val maxVolume: Long = 100
+        const val clientId = "testClient"
+        const val assetId = "BTC"
+        const val messageSubject = "testSubject"
+        val notificationsConfig = buildNotificationConfig()
     }
 
     @Before

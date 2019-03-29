@@ -3,6 +3,7 @@ package com.lykke.trade.volume.monitoring.service.cache.impl
 import com.lykke.trade.volume.monitoring.service.cache.AssetPairsCache
 import com.lykke.trade.volume.monitoring.service.entity.AssetPair
 import com.lykke.trade.volume.monitoring.service.loader.AssetPairsLoader
+import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.logging.ThrottlingLogger
 
 class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
@@ -10,6 +11,7 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
 
     companion object {
         private val LOGGER = ThrottlingLogger.getLogger(AssetPairsCacheImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     @Volatile
@@ -23,7 +25,9 @@ class AssetPairsCacheImpl(private val assetPairsLoader: AssetPairsLoader,
         val assetPairsById = try {
             assetPairsLoader.loadAssetPairsByIdMap()
         } catch (e: Exception) {
-            LOGGER.error("Unable to load asset pairs", e)
+            val message = "Unable to load asset pairs"
+            LOGGER.error(message, e)
+            METRICS_LOGGER.logError(message, e)
             return
         }
 

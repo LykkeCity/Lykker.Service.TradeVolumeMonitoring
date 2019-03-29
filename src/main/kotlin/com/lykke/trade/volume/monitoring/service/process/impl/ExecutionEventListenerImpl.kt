@@ -5,6 +5,7 @@ import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventListener
 import com.lykke.trade.volume.monitoring.service.process.ExecutionEventProcessor
+import com.lykke.utils.logging.MetricsLogger
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executor
 
@@ -16,6 +17,7 @@ class ExecutionEventListenerImpl(private val id: Long,
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(ExecutionEventListenerImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     override fun startProcessingExecutionEvents() {
@@ -24,7 +26,9 @@ class ExecutionEventListenerImpl(private val id: Long,
                 try {
                     processEvent(inputQueue.take())
                 } catch (e: Exception) {
-                    LOGGER.error(null, "Unable to take and process event: ${e.message}", e)
+                    val message = "Unable to take and process event"
+                    LOGGER.error(null, message, e)
+                    METRICS_LOGGER.logError(message, e)
                 }
             }
         }
@@ -40,9 +44,9 @@ class ExecutionEventListenerImpl(private val id: Long,
             }
             outputQueue.put(tradeVolumes)
         } catch (e: Exception) {
-            LOGGER.error(event.sequenceNumber,
-                    "Unable to process incoming execution event: ${e.message}",
-                    e)
+            val message = "Unable to process incoming execution event"
+            LOGGER.error(event.sequenceNumber, message, e)
+            METRICS_LOGGER.logError(message, e)
         }
     }
 }

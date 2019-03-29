@@ -10,6 +10,7 @@ import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.TradeVolumesProcessor
+import com.lykke.utils.logging.MetricsLogger
 import java.math.BigDecimal
 import java.util.*
 
@@ -22,6 +23,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(TradeVolumesProcessorImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     override fun process(eventTradeVolumesWrapper: EventTradeVolumesWrapper) {
@@ -34,9 +36,9 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                 val tradeVolumePersistenceData = processTradeVolume(eventTradeVolumesWrapper.eventSequenceNumber, tradeVolume)
                 tradeVolumesPersistenceData.add(tradeVolumePersistenceData)
             } catch (e: Exception) {
-                LOGGER.error(eventTradeVolumesWrapper.eventSequenceNumber,
-                        "Unable to process trade volume ($tradeVolume): ${e.message}",
-                        e)
+                val message = "Unable to process trade volume ($tradeVolume)"
+                LOGGER.error(eventTradeVolumesWrapper.eventSequenceNumber, message, e)
+                METRICS_LOGGER.logError(message, e)
             }
         }
         persist(EventPersistenceData(eventTradeVolumesWrapper.eventSequenceNumber,
@@ -48,7 +50,9 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         try {
             persistenceManager.persist(eventPersistenceData)
         } catch (e: Exception) {
-            LOGGER.error(eventPersistenceData.sequenceNumber, "Unable to persist data: ${e.message}", e)
+            val message = "Unable to persist data"
+            LOGGER.error(eventPersistenceData.sequenceNumber, message, e)
+            METRICS_LOGGER.logError(message, e)
         }
     }
 

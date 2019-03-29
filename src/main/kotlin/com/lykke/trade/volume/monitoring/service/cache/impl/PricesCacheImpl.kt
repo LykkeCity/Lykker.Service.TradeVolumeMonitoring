@@ -4,6 +4,7 @@ import com.lykke.trade.volume.monitoring.service.cache.PricesCache
 import com.lykke.trade.volume.monitoring.service.entity.Rate
 import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
 import com.lykke.trade.volume.monitoring.service.utils.divideWithMaxScale
+import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.logging.ThrottlingLogger
 import java.math.BigDecimal
 import java.util.concurrent.ConcurrentHashMap
@@ -14,6 +15,7 @@ class PricesCacheImpl(private val ratesLoader: RatesLoader,
 
     companion object {
         private val LOGGER = ThrottlingLogger.getLogger(PricesCacheImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     @Volatile
@@ -23,7 +25,9 @@ class PricesCacheImpl(private val ratesLoader: RatesLoader,
         val ratesByAssetPairId = try {
             ratesLoader.loadRatesByAssetPairIdMap()
         } catch (e: Exception) {
-            LOGGER.error("Unable to load rates", e)
+            val message = "Unable to load rates"
+            LOGGER.error(message, e)
+            METRICS_LOGGER.logError(message, e)
             return
         }
         val midPricesByAssetPairId = convertToMidPricesByAssetPairIdMap(ratesByAssetPairId)

@@ -1,8 +1,8 @@
 package com.lykke.trade.volume.monitoring.service.entity
 
+import com.lykke.trade.volume.monitoring.service.buildTradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.cache.impl.TradeVolumeCacheImpl
-import com.lykke.trade.volume.monitoring.service.getConfig
 import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import org.junit.Before
 import org.junit.Test
@@ -13,17 +13,20 @@ import kotlin.test.assertEquals
 
 class TradeVolumeCacheTest {
 
+    private companion object {
+        const val CLIENT1 = "CLIENT1"
+        const val CLIENT2 = "CLIENT2"
+
+        const val ASSET1 = "ASSET1"
+        const val ASSET2 = "ASSET2"
+    }
+
     private lateinit var tradeVolumeCache: TradeVolumeCache
     private var loader = Mockito.mock(EventsLoader::class.java)
-    private val CLIENT1 = "CLIENT1"
-    private val CLIENT2 = "CLIENT2"
-
-    private val ASSET1 = "ASSET1"
-    private val ASSET2 = "ASSET2"
 
     @Before
     fun init() {
-        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig, loader)
+        tradeVolumeCache = TradeVolumeCacheImpl(buildTradeVolumeCacheConfig(), loader)
     }
 
     @Test
@@ -254,7 +257,7 @@ class TradeVolumeCacheTest {
                                 TradeVolumePersistenceData(1, CLIENT1, ASSET2, BigDecimal("3.333"), date3)
                         ))
                 ))
-        tradeVolumeCache = TradeVolumeCacheImpl(getConfig().tradeVolumeConfig.tradeVolumeCacheConfig, loader)
+        tradeVolumeCache = TradeVolumeCacheImpl(buildTradeVolumeCacheConfig(), loader)
         (tradeVolumeCache as TradeVolumeCacheImpl).init()
 
         val date4 = Date(date.time - 4)
