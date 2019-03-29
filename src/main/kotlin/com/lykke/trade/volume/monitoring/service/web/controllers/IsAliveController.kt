@@ -5,6 +5,7 @@ import com.lykke.trade.volume.monitoring.service.web.dto.IsAliveResponseDto
 import com.lykke.trade.volume.monitoring.service.web.dto.MonitoringStatsDto
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.apache.http.HttpStatus
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -24,19 +25,21 @@ class IsAliveController(private val isAliveResponseGetter: IsAliveResponseGetter
     fun isAlive(): ResponseEntity<IsAliveResponseDto> {
         val isAliveResponse = isAliveResponseGetter.getResponse()
         val monitoringStatsDto = isAliveResponse.monitoringStats?.let {
-            MonitoringStatsDto(VmCpuLoad = it.vmCpuLoad,
-                    TotalCpuLoad = it.totalCpuLoad,
-                    TotalMemory = it.totalMemory,
-                    FreeMemory = it.freeMemory,
-                    MaxHeap = it.maxHeap,
-                    TotalHeap = it.totalHeap,
-                    FreeHeap = it.freeHeap,
-                    TotalSwap = it.totalSwap,
-                    FreeSwap = it.freeSwap,
-                    ThreadsCount = it.threadsCount)
+            MonitoringStatsDto(vmCpuLoad = it.vmCpuLoad,
+                    totalCpuLoad = it.totalCpuLoad,
+                    totalMemory = it.totalMemory,
+                    freeMemory = it.freeMemory,
+                    maxHeap = it.maxHeap,
+                    totalHeap = it.totalHeap,
+                    freeHeap = it.freeHeap,
+                    totalSwap = it.totalSwap,
+                    freeSwap = it.freeSwap,
+                    threadsCount = it.threadsCount)
         }
         val isAliveResponseDto = IsAliveResponseDto(isAliveResponse.version, monitoringStatsDto)
         LOGGER.debug("Got isAlive request")
-        return ResponseEntity.status(isAliveResponse.responseCode).body(isAliveResponseDto)
+        return ResponseEntity
+                .status(if (isAliveResponse.ok) HttpStatus.SC_OK else HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                .body(isAliveResponseDto)
     }
 }
