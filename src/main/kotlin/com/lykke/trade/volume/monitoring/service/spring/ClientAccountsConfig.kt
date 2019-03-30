@@ -28,13 +28,15 @@ open class ClientAccountsConfig {
     @Bean
     open fun clientAccountsCache(): ClientAccountsCache {
         val clientAccountsConfig = config.tradeVolumeConfig.clientAccountsConfig
-        return ClientAccountCacheFactory.get(ClientsAccountsConfig(RabbitMqConfig(uri = clientAccountsConfig.rmqConfig.uri,
-                exchange = clientAccountsConfig.rmqConfig.exchange,
-                queueName = clientAccountsConfig.rmqConfig.queueName,
-                routingKey = clientAccountsConfig.rmqConfig.routingKey,
-                queue = clientAccountEventsQueue()),
-                ClientsAccountsHttpConfig(config.tradeVolumeConfig.clientAccountsConfig.httpConfig.baseUrl,
-                        config.tradeVolumeConfig.clientAccountsConfig.httpConfig.timeout)))
+        return with(clientAccountsConfig) {
+            return ClientAccountCacheFactory.get(ClientsAccountsConfig(RabbitMqConfig(uri = rmqConfig.uri,
+                    exchange = rmqConfig.exchange,
+                    queueName = rmqConfig.queueName,
+                    routingKey = rmqConfig.routingKey,
+                    queue = clientAccountEventsQueue()),
+                    ClientsAccountsHttpConfig(httpConfig.baseUrl,
+                            httpConfig.timeout)))
+        }
     }
 
     @PreDestroy
