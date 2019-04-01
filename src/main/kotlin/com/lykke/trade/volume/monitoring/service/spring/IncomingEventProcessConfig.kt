@@ -1,5 +1,6 @@
 package com.lykke.trade.volume.monitoring.service.spring
 
+import com.lykke.client.accounts.ClientAccountsCache
 import com.lykke.me.subscriber.incoming.events.ExecutionEvent
 import com.lykke.me.subscriber.incoming.events.proto.MeProtoEvent
 import com.lykke.me.subscriber.rabbitmq.MeRabbitMqProtoEventListener
@@ -210,13 +211,15 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
                               config: Config,
                               persistenceManager: PersistenceManager,
                               tradeVolumeCache: TradeVolumeCache,
-                              notificationService: NotificationService): TradeVolumesProcessor {
+                              notificationService: NotificationService,
+                              clientAccountsCache: ClientAccountsCache): TradeVolumesProcessor {
         return TradeVolumesProcessorImpl(config.tradeVolumeConfig.assetId,
                 assetVolumeConverter,
                 persistenceManager,
                 tradeVolumeCache,
                 config.tradeVolumeConfig.maxVolume,
-                notificationService)
+                notificationService,
+                clientAccountsCache)
     }
 
     @Bean

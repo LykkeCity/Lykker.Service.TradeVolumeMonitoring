@@ -95,6 +95,7 @@ ext {
 
     kotlin_utils_version = '0.0.13-SNAPSHOT'
     me_message_subscriber_version = '1.0.5-SNAPSHOT'
+    client_accounts_lib_version = '1.0.1-SNAPSHOT'
 
     gson_version = '2.8.1'
     okhttp_version = '2.7.5'
@@ -121,11 +122,12 @@ dependencies {
 
     compile "org.bitbucket.lykke:kotlin-utils:$kotlin_utils_version"
     compile "org.bitbucket.lykke:me-message-subscriber:$me_message_subscriber_version"
+    compile "org.bitbucket.lykke:common-client-accounts:$client_accounts_lib_version"
 
     compile("org.springframework.boot:spring-boot-starter-log4j2")
     compile "com.lmax:disruptor:$lmax_disruptor_version"
     compile "commons-validator:commons-validator:$commons_validator_version"
-    
+
     compile "io.springfox:springfox-swagger2:$springfox_swagger2"
     compile "io.springfox:springfox-swagger-ui:$springfox_swagger_ui"
 
