@@ -1,7 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.notification
 
+import com.lykke.trade.volume.monitoring.service.buildNotificationConfig
 import com.lykke.trade.volume.monitoring.service.cache.SentNotificationsCache
-import com.lykke.trade.volume.monitoring.service.getConfig
 import com.lykke.trade.volume.monitoring.service.cache.impl.SentNotificationsCacheImpl
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -11,22 +11,20 @@ import org.junit.Test
 class SentNotificationsCacheTest {
 
     private companion object {
-        val CLIENT1 = "CLIENT1"
-        val CLIENT2 = "CLIENT2"
+        const val CLIENT1 = "CLIENT1"
+        const val CLIENT2 = "CLIENT2"
 
-        val ASSET1 = "ASSET1"
-        val ASSET2 = "ASSET2"
-        val ASSET3 = "ASSET3"
+        const val ASSET1 = "ASSET1"
+        const val ASSET2 = "ASSET2"
+        const val ASSET3 = "ASSET3"
     }
 
     lateinit var cache: SentNotificationsCache
 
-
     @Before
     fun init() {
-        cache = SentNotificationsCacheImpl(getConfig().tradeVolumeConfig.notificationsConfig)
+        cache = SentNotificationsCacheImpl(buildNotificationConfig())
     }
-
 
     @Test
     fun testAdd() {

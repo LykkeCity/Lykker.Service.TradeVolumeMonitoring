@@ -6,6 +6,7 @@ import com.lykke.trade.volume.monitoring.service.entity.ProcessedEvent
 import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.MatchingEngineEventSubscriber
+import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.notification.Listener
 import java.util.Date
 import java.util.concurrent.BlockingQueue
@@ -16,15 +17,16 @@ class MatchingEngineExecutionEventSubscriberImpl(private val eventDeduplicationS
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(MatchingEngineExecutionEventSubscriberImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     override fun notify(message: MeProtoEvent<*>) {
         try {
             handleIncomingEvent(message)
         } catch (e: Exception) {
-            LOGGER.error(message.sequenceNumber,
-                    "Unable to read incoming event: ${e.message}",
-                    e)
+            val logMessage = "Unable to read incoming event"
+            LOGGER.error(message.sequenceNumber, logMessage, e)
+            METRICS_LOGGER.logError(logMessage, e)
         }
     }
 
