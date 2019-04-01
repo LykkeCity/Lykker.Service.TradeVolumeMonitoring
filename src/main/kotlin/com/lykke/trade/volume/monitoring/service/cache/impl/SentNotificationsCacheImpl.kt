@@ -2,6 +2,7 @@ package com.lykke.trade.volume.monitoring.service.cache.impl
 
 import com.lykke.trade.volume.monitoring.service.config.NotificationsConfig
 import com.lykke.trade.volume.monitoring.service.cache.SentNotificationsCache
+import com.lykke.trade.volume.monitoring.service.entity.SentNotificationRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -10,23 +11,30 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Component
 class SentNotificationsCacheImpl(@Value("#{Config.tradeVolumeConfig.notificationsConfig}")
-                                 val notificationConfig: NotificationsConfig): SentNotificationsCache {
-    private val timestampByNotificationKey = ConcurrentHashMap<String, Date>()
+                                 val notificationConfig: NotificationsConfig,
+                                 @Value("#{Config.tradeVolumeConfig.tradeVolumeCacheConfig.volumePeriod}")
+                                 val volumePeriod: Long): SentNotificationsCache {
+    private val sentNotificationByKey = ConcurrentHashMap<String, SentNotificationRecord>()
 
     override fun add(clientId: String, assetId: String) {
-        timestampByNotificationKey[getKey(clientId, assetId)] = Date()
+        sentNotificationByKey[getKey(clientId, assetId)] = SentNotificationRecord(clientId = clientId,
+                assetId = assetId, timestamp =  Date())
     }
 
     override fun isSent(clientId: String, assetId: String): Boolean {
-        val timestamp = timestampByNotificationKey[getKey(clientId, assetId)]
-        return timestamp != null && timestamp.time > Date().time - notificationConfig.throttlingPeriod
+        val notification = sentNotificationByKey[getKey(clientId, assetId)]
+        return notification != null && notification.timestamp.time > Date().time - notificationConfig.throttlingPeriod
+    }
+
+    override fun getAllNotificationsForLastTradePeriod(): List<SentNotificationRecord> {
+        return LinkedList(sentNotificationByKey.values)
     }
 
     @Scheduled(fixedRateString = "#{Config.tradeVolumeConfig.notificationsConfig.throttlingPeriod}")
     private fun clean() {
-        timestampByNotificationKey.forEach { key: String, timeStamp: Date ->
-            if(Date().time - notificationConfig.throttlingPeriod >= timeStamp.time) {
-                timestampByNotificationKey.remove(key)
+        sentNotificationByKey.forEach { key: String, notification: SentNotificationRecord ->
+            if(Date().time - volumePeriod >= notification.timestamp.time) {
+                sentNotificationByKey.remove(key)
             }
         }
     }

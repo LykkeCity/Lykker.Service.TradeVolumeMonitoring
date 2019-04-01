@@ -23,7 +23,7 @@ class SentNotificationsCacheTest {
 
     @Before
     fun init() {
-        cache = SentNotificationsCacheImpl(buildNotificationConfig())
+        cache = SentNotificationsCacheImpl(buildNotificationConfig(), 1000L)
     }
 
     @Test
