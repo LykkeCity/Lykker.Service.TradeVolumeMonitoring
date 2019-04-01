@@ -24,6 +24,7 @@ import com.lykke.trade.volume.monitoring.service.holder.impl.AssetsHolderImpl
 import com.lykke.trade.volume.monitoring.service.holder.impl.PricesHolderImpl
 import com.lykke.trade.volume.monitoring.service.loader.AssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
+import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import com.lykke.trade.volume.monitoring.service.loader.RatesLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetPairsLoader
 import com.lykke.trade.volume.monitoring.service.loader.azure.AzureAssetsLoader
@@ -195,9 +196,14 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
         return ProtoExecutionEventProcessor()
     }
 
-    @Bean
-    fun eventDeduplicationService(): EventDeduplicationService {
-        return EventDeduplicationServiceImpl()
+    @Bean(initMethod = "init")
+    fun eventDeduplicationService(eventsLoader: EventsLoader,
+                                  taskScheduler: TaskScheduler,
+                                  config: Config): EventDeduplicationService {
+        val tradeVolumeCacheConfig = config.tradeVolumeConfig.tradeVolumeCacheConfig
+        return EventDeduplicationServiceImpl(eventsLoader,
+                tradeVolumeCacheConfig.volumePeriod * tradeVolumeCacheConfig.expiryRatio,
+                taskScheduler)
     }
 
     @Bean

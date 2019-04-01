@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.spring.executor
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.logging.ThrottlingLogger
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CancellationException
@@ -23,6 +24,7 @@ class ThreadPoolExecutorWithLogExceptionSupport(corePoolSize: Int,
 
     private companion object {
         private val LOGGER = ThrottlingLogger.getLogger(ThreadPoolExecutorWithLogExceptionSupport::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     override fun afterExecute(r: Runnable?, t: Throwable?) {
@@ -43,6 +45,7 @@ class ThreadPoolExecutorWithLogExceptionSupport(corePoolSize: Int,
         if (exception != null) {
             val message = "Unhandled exception occurred in thread: ${Thread.currentThread().name}"
             LOGGER.error(message, exception)
+            METRICS_LOGGER.logError(message)
         }
     }
 }

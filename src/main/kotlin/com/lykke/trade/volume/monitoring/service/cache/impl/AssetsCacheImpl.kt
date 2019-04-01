@@ -3,6 +3,7 @@ package com.lykke.trade.volume.monitoring.service.cache.impl
 import com.lykke.trade.volume.monitoring.service.cache.AssetsCache
 import com.lykke.trade.volume.monitoring.service.entity.Asset
 import com.lykke.trade.volume.monitoring.service.loader.AssetsLoader
+import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.logging.ThrottlingLogger
 import java.util.concurrent.ConcurrentHashMap
 
@@ -11,6 +12,7 @@ class AssetsCacheImpl(private val loader: AssetsLoader,
 
     companion object {
         private val LOGGER = ThrottlingLogger.getLogger(AssetsCacheImpl::class.java.name)
+        private val METRICS_LOGGER = MetricsLogger.getLogger()
     }
 
     @Volatile
@@ -31,7 +33,9 @@ class AssetsCacheImpl(private val loader: AssetsLoader,
         val assetsById = try {
             loader.loadAssetsByIdMap()
         } catch (e: Exception) {
-            LOGGER.error("Unable to load assets", e)
+            val message = "Unable to load assets"
+            LOGGER.error(message, e)
+            METRICS_LOGGER.logError(message, e)
             return
         }
         this.assetsById = ConcurrentHashMap(assetsById)
