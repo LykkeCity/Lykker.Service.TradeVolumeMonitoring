@@ -28,7 +28,6 @@ class EventDeduplicationServiceImpl(private val eventsLoader: EventsLoader,
         if (initialized) {
             throw ApplicationException("Already initialized")
         }
-        initialized = true
         val loadedSequenceNumbers = eventsLoader.loadEvents().map { it.sequenceNumber }
         lock.withLock {
             sequenceNumbers.addAll(loadedSequenceNumbers)
@@ -37,6 +36,7 @@ class EventDeduplicationServiceImpl(private val eventsLoader: EventsLoader,
         taskScheduler.scheduleAtFixedRate(::clean,
                 ZonedDateTime.now().toInstant().plusMillis(cleanPeriod),
                 Duration.ofMillis(cleanPeriod))
+        initialized = true
     }
 
     override fun checkAndAdd(sequenceNumber: Long): Boolean {
