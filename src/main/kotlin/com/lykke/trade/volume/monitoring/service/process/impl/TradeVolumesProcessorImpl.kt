@@ -1,10 +1,12 @@
 package com.lykke.trade.volume.monitoring.service.process.impl
 
+import com.lykke.client.accounts.ClientAccountsCache
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
+import com.lykke.trade.volume.monitoring.service.exception.ApplicationException
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
@@ -19,7 +21,8 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                                 private val persistenceManager: PersistenceManager,
                                 private val tradeVolumeCache: TradeVolumeCache,
                                 private val maxVolume: BigDecimal,
-                                private val notificationService: NotificationService) : TradeVolumesProcessor {
+                                private val notificationService: NotificationService,
+                                private val clientAccountsCache: ClientAccountsCache) : TradeVolumesProcessor {
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(TradeVolumesProcessorImpl::class.java.name)
@@ -57,13 +60,13 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
     }
 
     private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData {
+        val clientId = clientAccountsCache.getClientByWalletId(tradeVolume.walletId)
+                ?: throw ApplicationException("Can not find client by wallet: ${tradeVolume.walletId}")
 
         val targetAssetVolume = if (tradeVolume.assetId == targetAssetId)
             tradeVolume.volume
         else
             converter.convert(tradeVolume.assetId, tradeVolume.volume, targetAssetId)
-
-        val clientId = tradeVolume.walletId // todo: additional task: map walletId -> clientId using lib
 
         val volumesForThePeriod = tradeVolumeCache.add(eventSequenceNumber,
                 tradeVolume.tradeIdx,
@@ -84,8 +87,8 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
     }
 
     private fun sendMailNotificationsIfNeeded(eventSequenceNumber: Long, clientId: String, assetId: String, volumes: List<Pair<Long, BigDecimal>>) {
-        volumes.forEach {volume ->
-            if(volume.second >= maxVolume) {
+        volumes.forEach { volume ->
+            if (volume.second >= maxVolume) {
                 LOGGER.info(eventSequenceNumber, "Trade volume limit reached for client $clientId, assetId: $assetId")
                 notificationService.sendTradeVolumeLimitReachedMailNotification(clientId, assetId, Date(volume.first))
                 return

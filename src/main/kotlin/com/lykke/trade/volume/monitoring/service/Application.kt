@@ -7,7 +7,7 @@ import org.springframework.boot.runApplication
 @SpringBootApplication
 class Application
 
-private val LOGGER = LoggerFactory.getLogger("AppStarter")
+val LOGGER = LoggerFactory.getLogger("AppStarter")
 
 fun main(args: Array<String>) {
     try {
