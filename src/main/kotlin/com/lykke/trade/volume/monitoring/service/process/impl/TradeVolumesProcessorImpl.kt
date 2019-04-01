@@ -6,6 +6,7 @@ import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
+import com.lykke.trade.volume.monitoring.service.exception.ApplicationException
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
@@ -36,9 +37,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         eventTradeVolumesWrapper.tradeVolumes.forEach { tradeVolume ->
             try {
                 val tradeVolumePersistenceData = processTradeVolume(eventTradeVolumesWrapper.eventSequenceNumber, tradeVolume)
-                tradeVolumePersistenceData?.let {
-                    tradeVolumesPersistenceData.add(tradeVolumePersistenceData)
-                }
+                tradeVolumesPersistenceData.add(tradeVolumePersistenceData)
             } catch (e: Exception) {
                 val message = "Unable to process trade volume ($tradeVolume)"
                 LOGGER.error(eventTradeVolumesWrapper.eventSequenceNumber, message, e)
@@ -60,12 +59,9 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
         }
     }
 
-    private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData? {
+    private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData {
         val clientId = clientAccountsCache.getClientByWalletId(tradeVolume.walletId)
-        if (clientId == null) {
-            LOGGER.warn(eventSequenceNumber, "Can not find client by wallet: ${tradeVolume.walletId}")
-            return null
-        }
+                ?: throw ApplicationException("Can not find client by wallet: ${tradeVolume.walletId}")
 
         val targetAssetVolume = if (tradeVolume.assetId == targetAssetId)
             tradeVolume.volume
