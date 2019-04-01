@@ -2,13 +2,11 @@ package com.lykke.trade.volume.monitoring.service.process.impl
 
 import com.lykke.me.subscriber.incoming.events.ExecutionEvent
 import com.lykke.me.subscriber.incoming.events.proto.MeProtoEvent
-import com.lykke.trade.volume.monitoring.service.entity.ProcessedEvent
 import com.lykke.trade.volume.monitoring.service.process.EventDeduplicationService
 import com.lykke.trade.volume.monitoring.service.process.EventProcessLoggerFactory
 import com.lykke.trade.volume.monitoring.service.process.MatchingEngineEventSubscriber
 import com.lykke.utils.logging.MetricsLogger
 import com.lykke.utils.notification.Listener
-import java.util.Date
 import java.util.concurrent.BlockingQueue
 
 class MatchingEngineExecutionEventSubscriberImpl(private val eventDeduplicationService: EventDeduplicationService,
@@ -32,11 +30,10 @@ class MatchingEngineExecutionEventSubscriberImpl(private val eventDeduplicationS
 
     private fun handleIncomingEvent(message: MeProtoEvent<*>) {
         LOGGER.debug(message.sequenceNumber, "Got incoming event, ME messageId: ${message.messageId}")
-        if (eventDeduplicationService.isDuplicate(message.sequenceNumber)) {
+        if (!eventDeduplicationService.checkAndAdd(message.sequenceNumber)) {
             LOGGER.warn(message.sequenceNumber, "Duplicate")
             return
         }
-        eventDeduplicationService.addProcessedEvent(ProcessedEvent(message.sequenceNumber, Date().time))
         outputQueue.put(message as ExecutionEvent)
     }
 

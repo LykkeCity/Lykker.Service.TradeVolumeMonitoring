@@ -94,7 +94,7 @@ ext {
     commons_validator_version = '1.6'
 
     kotlin_utils_version = '0.0.13-SNAPSHOT'
-    me_message_subscriber_version = '1.0.4-SNAPSHOT'
+    me_message_subscriber_version = '1.0.5-SNAPSHOT'
 
     gson_version = '2.8.1'
     okhttp_version = '2.7.5'
