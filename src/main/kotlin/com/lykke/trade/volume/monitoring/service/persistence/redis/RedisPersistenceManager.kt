@@ -19,7 +19,7 @@ class RedisPersistenceManager(private val redisConfig: RedisConfig,
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(RedisPersistenceManager::class.java.name)
         private const val DATE_FORMAT_PATTERN = "yyyyMMddHH"
-        const val PREFIX = "event:"
+        const val PREFIX = "TradeVolumeMonitoring:event:"
     }
 
     private val ttlByteArray = ttl.toString().toByteArray()
