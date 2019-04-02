@@ -75,9 +75,13 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
 
     override fun getTradeVolumeForLastPeriod(clientId: String, assetId: String): ClientTradeVolume? {
         val tradeVolumes = tradeVolumesByClientIdByAssetId[clientId]?.get(assetId)
-        val tradeVolume = tradeVolumes?.first() ?: return null
+        val theMostRecentTradeVolume = tradeVolumes?.first() ?: return null
 
-        val tradeVolumesForPeriod = getTradeVolumesForPeriod(tradeVolume, tradeVolumes)
+        if (!isVolumeFromLastPeriod(theMostRecentTradeVolume)) {
+            return null
+        }
+
+        val tradeVolumesForPeriod = getTradeVolumesForPeriod(theMostRecentTradeVolume, tradeVolumes)
         if (tradeVolumesForPeriod.isEmpty()) {
             return null
         }
@@ -87,10 +91,10 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
 
     override fun getTradeVolumesForLastPeriod(clientId: String): List<ClientTradeVolume> {
         val result = ArrayList<ClientTradeVolume>()
-        tradeVolumesByClientIdByAssetId[clientId]?.forEach { assetId, volumes ->
-            val tradeVolumesForPeriod = getTradeVolumesForPeriod(volumes.first(), volumes)
-            if (tradeVolumesForPeriod.isNotEmpty()) {
-                result.add(ClientTradeVolume(clientId, assetId, tradeVolumesForPeriod.single().second, Date(tradeVolumesForPeriod.single().first)))
+        tradeVolumesByClientIdByAssetId[clientId]?.keys?.forEach {assetId ->
+            val tradeVolumeForLastPeriod = getTradeVolumeForLastPeriod(clientId, assetId)
+            if (tradeVolumeForLastPeriod != null) {
+                result.add(tradeVolumeForLastPeriod)
             }
         }
 
@@ -197,6 +201,10 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
         return tradeVolumesByClientIdByAssetId
                 .getOrPut(clientId) { ConcurrentHashMap() }
                 .getOrPut(assetId) { TreeSet() }
+    }
+
+    private fun isVolumeFromLastPeriod(volume: Volume): Boolean {
+        return Date().time - cacheConfig.volumePeriod < volume.timestamp.time
     }
 
     private data class Volume(val eventSequenceNumber: Long,

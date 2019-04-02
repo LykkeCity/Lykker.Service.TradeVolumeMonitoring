@@ -10,6 +10,7 @@ import org.mockito.Mockito
 import java.math.BigDecimal
 import java.util.Date
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class TradeVolumeCacheTest {
 
@@ -35,27 +36,32 @@ class TradeVolumeCacheTest {
         val volumesByTimestamp = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(1000), timestamp)
         assertEquals(1, volumesByTimestamp.size)
         assertEquals(BigDecimal.valueOf(1000), volumesByTimestamp.first().second)
+        assertEquals(BigDecimal.valueOf(1000), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
+        assertEquals(BigDecimal.valueOf(1000), tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1).single().volume)
     }
 
     @Test
     fun testVolumeIsInsertedAtTheMiddle() {
         val now = Date()
-        val firstTimestamp = Date(now.time - 100)
-        val secondTimestamp = Date(firstTimestamp.time + 99)
-        val thirdTimestamp = Date(secondTimestamp.time + 99)
+        val firstTimestamp = Date(now.time - 150)
+        val secondTimestamp = Date(now.time - 90)
+        val thirdTimestamp = now
 
         val firstResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(10), firstTimestamp)
         assertEquals(1, firstResult.size)
         assertEquals(BigDecimal.valueOf(10), firstResult.first().second)
+
         val thirdResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(900), thirdTimestamp)
         assertEquals(1, thirdResult.size)
         assertEquals(BigDecimal.valueOf(900), thirdResult.first().second)
+        assertEquals(BigDecimal.valueOf(900), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
 
         val secondResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(995), secondTimestamp)
 
         assertEquals(2, secondResult.size)
         assertEquals(BigDecimal.valueOf(1005), secondResult.findLast { pair -> pair.first == secondTimestamp.time }!!.second)
         assertEquals(BigDecimal.valueOf(1895), secondResult.findLast { pair -> pair.first == thirdTimestamp.time }!!.second)
+        assertEquals(BigDecimal.valueOf(1895), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
     }
 
     @Test
@@ -75,7 +81,7 @@ class TradeVolumeCacheTest {
         val thirdResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(900), thirdTimestamp)
         assertEquals(1, thirdResult.size)
         assertEquals(BigDecimal.valueOf(1895), thirdResult.first().second)
-
+        assertEquals(BigDecimal.valueOf(1895), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
     }
 
     @Test
@@ -101,6 +107,7 @@ class TradeVolumeCacheTest {
         assertEquals(BigDecimal.valueOf(10), firstResult.findLast { pair -> pair.first == firstTimestamp.time }!!.second)
         assertEquals(BigDecimal.valueOf(1005), firstResult.findLast { pair -> pair.first == secondTimestamp.time }!!.second)
         assertEquals(BigDecimal.valueOf(1895), firstResult.findLast { pair -> pair.first == thirdTimestamp.time }!!.second)
+        assertEquals(BigDecimal.valueOf(1895), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
     }
 
     @Test
@@ -128,16 +135,18 @@ class TradeVolumeCacheTest {
         assertEquals(BigDecimal.valueOf(438), secondClientThirdResult.findLast { pair -> pair.first == secondClientSecondTimeStamp.time }!!.second)
         assertEquals(BigDecimal.valueOf(350), secondClientThirdResult.findLast { pair -> pair.first == secondClientFirstTimeStamp.time }!!.second)
 
-        val firstResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(10), firstClientFirstTimestamp)
-        assertEquals(1, firstResult.size)
+        val firstClientFirstResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(10), firstClientFirstTimestamp)
+        assertEquals(1, firstClientFirstResult.size)
 
-        val secondResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(995), firstClientSecondTimestamp)
-        assertEquals(1, secondResult.size)
-        assertEquals(BigDecimal.valueOf(1005), secondResult.findLast { pair -> pair.first == firstClientSecondTimestamp.time }!!.second)
+        val firstClientSecondResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(995), firstClientSecondTimestamp)
+        assertEquals(1, firstClientSecondResult.size)
+        assertEquals(BigDecimal.valueOf(1005), firstClientSecondResult.findLast { pair -> pair.first == firstClientSecondTimestamp.time }!!.second)
 
-        val thirdResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(900), firstClientThirdTimestamp)
-        assertEquals(1, thirdResult.size)
-        assertEquals(BigDecimal.valueOf(1895), thirdResult.first().second)
+        val firstClientThirdResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(900), firstClientThirdTimestamp)
+        assertEquals(1, firstClientThirdResult.size)
+        assertEquals(BigDecimal.valueOf(1895), firstClientThirdResult.first().second)
+        assertEquals(BigDecimal.valueOf(1895), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
+        assertEquals(BigDecimal.valueOf(1895), tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1).single().volume)
     }
 
     @Test
@@ -164,6 +173,10 @@ class TradeVolumeCacheTest {
         assertEquals(1, secondAssetSecondResult.size)
         assertEquals(secondAssetSecondTimestamp.time, secondAssetSecondResult.first().first)
         assertEquals(BigDecimal.valueOf(80), secondAssetSecondResult.first().second)
+        val tradeVolumes = tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1)
+        assertEquals(2, tradeVolumes.size)
+        assertEquals(BigDecimal.valueOf(20), tradeVolumes.findLast { it.assetId == ASSET1 }!!.volume)
+        assertEquals(BigDecimal.valueOf(80), tradeVolumes.findLast { it.assetId == ASSET2 }!!.volume)
     }
 
     @Test
@@ -179,11 +192,13 @@ class TradeVolumeCacheTest {
         assertEquals(firstTimestamp.time, resultSameTimestamp.first().first)
 
         assertEquals(BigDecimal.valueOf(30), resultSameTimestamp.first().second)
+        assertEquals(BigDecimal.valueOf(30), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
 
         val resultSecondTimestamp = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(5), secondTimestamp)
         assertEquals(1, resultSecondTimestamp.size)
         assertEquals(secondTimestamp.time, resultSecondTimestamp.first().first)
         assertEquals(BigDecimal.valueOf(35), resultSecondTimestamp.first().second)
+        assertEquals(BigDecimal.valueOf(35), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
     }
 
     @Test
@@ -198,6 +213,7 @@ class TradeVolumeCacheTest {
         val firstResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(20), Date(now.time - 300))
         assertEquals(1, firstResult.size)
         assertEquals(BigDecimal.valueOf(20), firstResult.first().second)
+        assertNull(tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1))
 
         val secondResult = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(30), Date(now.time - 220))
         assertEquals(1, secondResult.size)
@@ -216,6 +232,8 @@ class TradeVolumeCacheTest {
         val result = tradeVolumeCache.add(1L, 1, CLIENT1, ASSET1, BigDecimal.valueOf(30), Date(now.time - 10))
         assertEquals(1, result.size)
         assertEquals(BigDecimal.valueOf(40), result.first().second)
+        assertEquals(BigDecimal.valueOf(40), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
+        assertEquals(1, tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1).size)
     }
 
     @Test
@@ -235,6 +253,8 @@ class TradeVolumeCacheTest {
         val result = tradeVolumeCache.add(2, 2, CLIENT1, ASSET1, BigDecimal("1"), date1)
 
         assertEquals(BigDecimal("3"), result.single { it.first == date2.time }.second)
+        assertEquals(BigDecimal("3"), tradeVolumeCache.getTradeVolumeForLastPeriod(CLIENT1, ASSET1)!!.volume)
+        assertEquals(1, tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1).size)
     }
 
     @Test
@@ -268,7 +288,14 @@ class TradeVolumeCacheTest {
         assertEquals(BigDecimal("9.9974"), result.single { it.first == date2.time }.second)
         assertEquals(BigDecimal("7.7774"), result.single { it.first == date3.time }.second)
         assertEquals(BigDecimal("4.4444"), result.single { it.first == date4.time }.second)
+        val firstClientTradeVolumes = tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT1)
+        assertEquals(2, firstClientTradeVolumes.size)
+        assertEquals(BigDecimal("11.0974"), firstClientTradeVolumes.findLast { it.assetId == ASSET1 }!!.volume)
+        assertEquals(BigDecimal("3.333"), firstClientTradeVolumes.findLast { it.assetId == ASSET2 }!!.volume)
 
+        val secondClientTradeVolumes = tradeVolumeCache.getTradeVolumesForLastPeriod(CLIENT2)
+        assertEquals(1, secondClientTradeVolumes.size)
+        assertEquals(BigDecimal("2.22"), secondClientTradeVolumes.single().volume)
+        assertEquals(ASSET1, secondClientTradeVolumes.single().assetId)
     }
-
 }
