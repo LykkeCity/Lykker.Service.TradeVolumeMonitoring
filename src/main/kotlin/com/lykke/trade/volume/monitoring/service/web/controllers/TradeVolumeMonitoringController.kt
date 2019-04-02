@@ -94,7 +94,7 @@ class TradeVolumeMonitoringController {
     }
 
     @ExceptionHandler
-    private fun handleSettingNotFound(request: HttpServletRequest, exception: IllegalArgumentException): ResponseEntity<String> {
+    private fun handleIllegalArguments(request: HttpServletRequest, exception: IllegalArgumentException): ResponseEntity<String> {
         return ResponseEntity(exception.message ?: "", HttpStatus.BAD_REQUEST)
     }
 }

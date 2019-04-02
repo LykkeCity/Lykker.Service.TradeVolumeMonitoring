@@ -89,7 +89,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
         val result = ArrayList<ClientTradeVolume>()
         tradeVolumesByClientIdByAssetId[clientId]?.forEach { assetId, volumes ->
             val tradeVolumesForPeriod = getTradeVolumesForPeriod(volumes.first(), volumes)
-            if (!tradeVolumesForPeriod.isEmpty()) {
+            if (tradeVolumesForPeriod.isNotEmpty()) {
                 result.add(ClientTradeVolume(clientId, assetId, tradeVolumesForPeriod.single().second, Date(tradeVolumesForPeriod.single().first)))
             }
         }
@@ -109,10 +109,6 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
                         lockByClientIdAssetId.remove(lockKey)
                     }
                 }
-            }
-
-            if (volumesByAssetId.isEmpty()) {
-                tradeVolumesByClientIdByAssetId.remove(clientId)
             }
         }
         LOGGER.debug("Trade volumes after cleaning cache: ${tradeVolumesByClientIdByAssetId
