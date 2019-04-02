@@ -20,7 +20,7 @@ class IsAliveController(private val isAliveResponseGetter: IsAliveResponseGetter
         private val LOGGER = LoggerFactory.getLogger(IsAliveController::class.java.name)
     }
 
-    @GetMapping("/api/IsAlive", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping("/api/isalive", produces = [MediaType.APPLICATION_JSON_VALUE])
     @ApiOperation("Get alive status")
     fun isAlive(): ResponseEntity<IsAliveResponseDto> {
         val isAliveResponse = isAliveResponseGetter.getResponse()
