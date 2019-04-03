@@ -17,7 +17,7 @@ import java.math.BigDecimal
 import java.util.*
 
 class TradeVolumesProcessorImpl(private val targetAssetId: String,
-                                private val crossAssetIds: Set<String>,
+                                private val crossAssetIds: List<String>,
                                 private val converter: AssetVolumeConverter,
                                 private val persistenceManager: PersistenceManager,
                                 private val tradeVolumeCache: TradeVolumeCache,

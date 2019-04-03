@@ -29,7 +29,7 @@ import kotlin.test.assertEquals
 class TradeVolumesProcessorTest {
 
     companion object {
-        private val CROSS_ASSET_IDS: Set<String> = setOf("CrossAsset1", "CrossAsset2")
+        private val CROSS_ASSET_IDS: List<String> = listOf("CrossAsset1", "CrossAsset2")
     }
 
     private lateinit var processor: TradeVolumesProcessor

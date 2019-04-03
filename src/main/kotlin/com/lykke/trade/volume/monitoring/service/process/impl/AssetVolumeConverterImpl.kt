@@ -15,7 +15,7 @@ class AssetVolumeConverterImpl(private val assetsHolder: AssetsHolder,
 
     override fun convert(assetId: String,
                          volume: BigDecimal,
-                         crossAssetIds: Set<String>,
+                         crossAssetIds: List<String>,
                          targetAssetId: String): BigDecimal {
         if (assetId == targetAssetId) {
             return volume
@@ -27,7 +27,7 @@ class AssetVolumeConverterImpl(private val assetsHolder: AssetsHolder,
     }
 
     private fun calculateConversionCoef(assetId: String,
-                                        crossAssetIds: Set<String>,
+                                        crossAssetIds: List<String>,
                                         targetAssetId: String): BigDecimal {
         return try {
             calculateStraightConversionCoef(assetId, targetAssetId)
@@ -51,7 +51,7 @@ class AssetVolumeConverterImpl(private val assetsHolder: AssetsHolder,
     }
 
     private fun calculateCrossAssetsConversionCoef(assetId: String,
-                                                   crossAssetIds: Set<String>,
+                                                   crossAssetIds: List<String>,
                                                    targetAssetId: String): BigDecimal {
         var errorMessage: StringBuilder? = null
         crossAssetIds.forEach {
