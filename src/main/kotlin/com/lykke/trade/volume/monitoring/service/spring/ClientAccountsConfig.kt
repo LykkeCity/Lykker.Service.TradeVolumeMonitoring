@@ -28,7 +28,7 @@ open class ClientAccountsConfig {
     @Bean
     open fun clientAccountsCache(): ClientAccountsCache {
         val clientAccountsConfig = config.tradeVolumeConfig.clientAccountsConfig
-        return with(clientAccountsConfig) {
+        with(clientAccountsConfig) {
             return ClientAccountCacheFactory.get(ClientsAccountsConfig(RabbitMqConfig(uri = rmqConfig.uri,
                     exchange = rmqConfig.exchange,
                     queueName = rmqConfig.queueName,

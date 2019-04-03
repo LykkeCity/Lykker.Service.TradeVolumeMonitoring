@@ -16,13 +16,12 @@ import java.math.BigDecimal
 class AssetVolumeConverterTest {
 
     private lateinit var converter: AssetVolumeConverter
+    private val assetPairsHolder = Mockito.mock(AssetPairsHolder::class.java)
+    private val pricesHolder = Mockito.mock(PricesHolder::class.java)
+    private val assetsHolder = Mockito.mock(AssetsHolder::class.java)
 
     @Before
     fun setUp() {
-        val assetsHolder = Mockito.mock(AssetsHolder::class.java)
-        val assetPairsHolder = Mockito.mock(AssetPairsHolder::class.java)
-        val pricesHolder = Mockito.mock(PricesHolder::class.java)
-
         Mockito.`when`(assetsHolder.getAsset("Asset1"))
                 .thenReturn(Asset("Asset1", 4))
 
@@ -47,33 +46,87 @@ class AssetVolumeConverterTest {
 
     @Test
     fun testConvertBaseToQuoting() {
-        assertEquals(BigDecimal("1.56"), converter.convert("Asset1", BigDecimal.ONE, "Asset2"))
-        assertEquals(BigDecimal("4.86"), converter.convert("Asset1", BigDecimal("3.1234567"), "Asset2"))
+        assertEquals(BigDecimal("1.56"), converter.convert("Asset1", BigDecimal.ONE, emptyList(), "Asset2"))
+        assertEquals(BigDecimal("4.86"), converter.convert("Asset1", BigDecimal("3.1234567"), emptyList(), "Asset2"))
     }
 
     @Test
     fun testConvertQuotingToBase() {
-        assertEquals(BigDecimal("1.0029"), converter.convert("Asset2", BigDecimal("1.56"), "Asset1"))
-        assertEquals(BigDecimal("3.1243"), converter.convert("Asset2", BigDecimal("4.86"), "Asset1"))
+        assertEquals(BigDecimal("1.0029"), converter.convert("Asset2", BigDecimal("1.56"), emptyList(), "Asset1"))
+        assertEquals(BigDecimal("3.1243"), converter.convert("Asset2", BigDecimal("4.86"), emptyList(), "Asset1"))
     }
 
     @Test
     fun testConvertToSameAsset() {
-        assertEquals(BigDecimal.ONE, converter.convert("Asset1", BigDecimal.ONE, "Asset1"))
+        assertEquals(BigDecimal.ONE, converter.convert("Asset1", BigDecimal.ONE, emptyList(), "Asset1"))
     }
 
     @Test(expected = ApplicationException::class)
     fun testUnknownTargetAsset() {
-        converter.convert("Asset1", BigDecimal.ONE, "UnknownAsset")
+        converter.convert("Asset1", BigDecimal.ONE, emptyList(), "UnknownAsset")
     }
 
     @Test(expected = ApplicationException::class)
     fun testUnknownAssetPair() {
-        converter.convert("Asset3", BigDecimal.ONE, "Asset2")
+        converter.convert("Asset3", BigDecimal.ONE, emptyList(), "Asset2")
+    }
+
+    @Test(expected = ApplicationException::class)
+    fun testUnknownStraightAndCrossAssetPairs() {
+        converter.convert("Asset3", BigDecimal.ONE, listOf("CrossAsset1", "CrossAsset2", "CrossAsset3"), "Asset2")
+    }
+
+    @Test
+    fun testConvertUnknownAssetPairThroughCrossAsset() {
+        Mockito.`when`(assetPairsHolder.getAssetPair("Asset3", "CrossAsset2"))
+                .thenReturn(AssetPair("CrossPair2-1", "Asset3", "CrossAsset2", 1))
+        Mockito.`when`(assetPairsHolder.getAssetPair("CrossAsset2", "Asset2"))
+                .thenReturn(AssetPair("CrossPair2-2-WithoutPrice", "Asset2", "CrossAsset2", 2))
+
+        Mockito.`when`(assetPairsHolder.getAssetPair("Asset3", "CrossAsset3"))
+                .thenReturn(AssetPair("CrossPair3-1", "Asset3", "CrossAsset3", 3))
+        Mockito.`when`(assetPairsHolder.getAssetPair("CrossAsset3", "Asset2"))
+                .thenReturn(AssetPair("CrossPair3-2", "Asset2", "CrossAsset3", 4))
+
+        Mockito.`when`(pricesHolder.getPrice("CrossPair2-1"))
+                .thenReturn(BigDecimal("1.1"))
+        Mockito.`when`(pricesHolder.getPrice("CrossPair3-1"))
+                .thenReturn(BigDecimal("10.123"))
+        Mockito.`when`(pricesHolder.getPrice("CrossPair3-2"))
+                .thenReturn(BigDecimal("15.6789"))
+
+        val result = converter.convert("Asset3", BigDecimal("1.23"), listOf("CrossAsset1", "CrossAsset2", "CrossAsset3"), "Asset2")
+        assertEquals(BigDecimal("0.79"), result)
     }
 
     @Test(expected = ApplicationException::class)
     fun testUnknownPriceToConvert() {
-        converter.convert("Asset1", BigDecimal.ONE, "Asset3")
+        converter.convert("Asset1", BigDecimal.ONE, emptyList(), "Asset3")
+    }
+
+    @Test
+    fun testConvertUnknownPriceThroughCrossAsset() {
+        Mockito.`when`(assetsHolder.getAsset("Asset3"))
+                .thenReturn(Asset("Asset3", 3))
+
+        Mockito.`when`(assetPairsHolder.getAssetPair("Asset1", "CrossAsset2"))
+                .thenReturn(AssetPair("CrossPair2-1", "Asset1", "CrossAsset2", 1))
+        Mockito.`when`(assetPairsHolder.getAssetPair("CrossAsset2", "Asset3"))
+                .thenReturn(AssetPair("CrossPair2-2-WithoutPrice", "Asset3", "CrossAsset2", 2))
+
+        Mockito.`when`(assetPairsHolder.getAssetPair("Asset1", "CrossAsset3"))
+                .thenReturn(AssetPair("CrossPair3-1", "Asset1", "CrossAsset3", 3))
+        Mockito.`when`(assetPairsHolder.getAssetPair("CrossAsset3", "Asset3"))
+                .thenReturn(AssetPair("CrossPair3-2", "Asset3", "CrossAsset3", 4))
+
+        Mockito.`when`(pricesHolder.getPrice("CrossPair2-1"))
+                .thenReturn(BigDecimal("1.1"))
+        Mockito.`when`(pricesHolder.getPrice("CrossPair3-1"))
+                .thenReturn(BigDecimal("10.123"))
+        Mockito.`when`(pricesHolder.getPrice("CrossPair3-2"))
+                .thenReturn(BigDecimal("15.6789"))
+
+        val result = converter.convert("Asset1", BigDecimal("1.23"), listOf("CrossAsset1", "CrossAsset2", "CrossAsset3"), "Asset3")
+        assertEquals(BigDecimal("0.794"), result)
     }
 }
