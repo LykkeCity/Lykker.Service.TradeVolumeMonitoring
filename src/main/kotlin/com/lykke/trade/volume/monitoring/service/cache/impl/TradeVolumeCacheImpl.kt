@@ -74,19 +74,21 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     }
 
     override fun getTradeVolumeForLastPeriod(clientId: String, assetId: String): ClientTradeVolume? {
-        val tradeVolumes = tradeVolumesByClientIdByAssetId[clientId]?.get(assetId)
-        val theMostRecentTradeVolume = tradeVolumes?.first() ?: return null
+        return synchronized(getLock(getLockKey(clientId, assetId))) {
+            val tradeVolumes = tradeVolumesByClientIdByAssetId[clientId]?.get(assetId)
+            val theMostRecentTradeVolume = tradeVolumes?.first() ?: return null
 
-        if (!isVolumeFromLastPeriod(theMostRecentTradeVolume)) {
-            return null
+            if (!isVolumeFromLastPeriod(theMostRecentTradeVolume)) {
+                return null
+            }
+
+            val tradeVolumesForPeriod = getTradeVolumesForPeriod(theMostRecentTradeVolume, tradeVolumes)
+            if (tradeVolumesForPeriod.isEmpty()) {
+                return null
+            }
+
+            return ClientTradeVolume(clientId, assetId, tradeVolumesForPeriod.single().second, Date(tradeVolumesForPeriod.single().first))
         }
-
-        val tradeVolumesForPeriod = getTradeVolumesForPeriod(theMostRecentTradeVolume, tradeVolumes)
-        if (tradeVolumesForPeriod.isEmpty()) {
-            return null
-        }
-
-        return ClientTradeVolume(clientId, assetId, tradeVolumesForPeriod.single().second, Date(tradeVolumesForPeriod.single().first))
     }
 
     override fun getTradeVolumesForLastPeriod(clientId: String): List<ClientTradeVolume> {
