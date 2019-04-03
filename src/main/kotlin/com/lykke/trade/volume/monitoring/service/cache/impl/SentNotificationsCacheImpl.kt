@@ -6,6 +6,7 @@ import com.lykke.trade.volume.monitoring.service.entity.SentNotificationRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import java.lang.Math.max
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,8 +33,9 @@ class SentNotificationsCacheImpl(@Value("#{Config.tradeVolumeConfig.notification
 
     @Scheduled(fixedRateString = "#{Config.tradeVolumeConfig.notificationsConfig.throttlingPeriod}")
     private fun clean() {
+        val timeBound = max(volumePeriod, notificationConfig.throttlingPeriod)
         sentNotificationByKey.forEach { key: String, notification: SentNotificationRecord ->
-            if(Date().time - volumePeriod >= notification.timestamp.time) {
+            if(Date().time - timeBound  >= notification.timestamp.time) {
                 sentNotificationByKey.remove(key)
             }
         }

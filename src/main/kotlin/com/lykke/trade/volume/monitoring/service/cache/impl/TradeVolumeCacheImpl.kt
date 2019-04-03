@@ -74,7 +74,7 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     }
 
     override fun getTradeVolumeForLastPeriod(clientId: String, assetId: String): ClientTradeVolume? {
-        return synchronized(getLock(getLockKey(clientId, assetId))) {
+        synchronized(getLock(getLockKey(clientId, assetId))) {
             val tradeVolumes = tradeVolumesByClientIdByAssetId[clientId]?.get(assetId)
             val theMostRecentTradeVolume = tradeVolumes?.first() ?: return null
 
