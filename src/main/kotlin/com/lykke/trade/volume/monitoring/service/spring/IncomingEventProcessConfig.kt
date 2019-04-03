@@ -214,6 +214,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
                               notificationService: NotificationService,
                               clientAccountsCache: ClientAccountsCache): TradeVolumesProcessor {
         return TradeVolumesProcessorImpl(config.tradeVolumeConfig.assetId,
+                config.tradeVolumeConfig.crossAssetIds ?: emptySet(),
                 assetVolumeConverter,
                 persistenceManager,
                 tradeVolumeCache,

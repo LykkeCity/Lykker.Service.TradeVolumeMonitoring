@@ -28,6 +28,10 @@ import kotlin.test.assertEquals
 @RunWith(MockitoJUnitRunner::class)
 class TradeVolumesProcessorTest {
 
+    companion object {
+        private val CROSS_ASSET_IDS: Set<String> = setOf("CrossAsset1", "CrossAsset2")
+    }
+
     private lateinit var processor: TradeVolumesProcessor
     private val tradeVolumeCache = TradeVolumeCacheStub()
     private val persistenceManager = PersistenceManagerStub()
@@ -43,12 +47,13 @@ class TradeVolumesProcessorTest {
 
     @Before
     fun setUp() {
-        Mockito.`when`(converter.convert("Asset1", BigDecimal.valueOf(5), "TargetAsset"))
+        Mockito.`when`(converter.convert("Asset1", BigDecimal.valueOf(5), CROSS_ASSET_IDS, "TargetAsset"))
                 .thenReturn(BigDecimal.valueOf(50), BigDecimal.valueOf(60))
 
         whenever(clientAccountsCache.getClientByWalletId(any())).thenAnswer { invocation -> invocation.arguments[0] }
 
         processor = TradeVolumesProcessorImpl("TargetAsset",
+                CROSS_ASSET_IDS,
                 converter,
                 persistenceManager,
                 tradeVolumeCache,
@@ -104,7 +109,7 @@ class TradeVolumesProcessorTest {
         val trades = listOf(TradeVolume(0, "wallet1", "Asset1", BigDecimal.valueOf(5), trade1),
                 TradeVolume(0, "wallet1", "Asset1", BigDecimal.valueOf(105), trade2))
 
-        Mockito.`when`(converter.convert(eq("Asset1"), any(), eq("TargetAsset")))
+        Mockito.`when`(converter.convert(eq("Asset1"), any(), eq(CROSS_ASSET_IDS), eq("TargetAsset")))
                 .thenAnswer { invocation -> (invocation.arguments[1] as BigDecimal).multiply(BigDecimal.valueOf(2)) }
 
         processor.process(EventTradeVolumesWrapper(1234, now, listOf(trades[0])))
