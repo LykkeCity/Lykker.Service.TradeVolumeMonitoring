@@ -2,6 +2,7 @@ package com.lykke.trade.volume.monitoring.service.cache.impl
 
 import com.lykke.trade.volume.monitoring.service.config.TradeVolumeCacheConfig
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.entity.ClientTradeVolume
 import com.lykke.trade.volume.monitoring.service.loader.EventsLoader
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -24,7 +25,8 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     companion object {
         private val LOGGER = LoggerFactory.getLogger(TradeVolumeCacheImpl::class.java.name)
     }
-    private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, NavigableSet<Volume>>()
+
+    private val tradeVolumesByClientIdByAssetId = ConcurrentHashMap<String, ConcurrentHashMap<String, NavigableSet<Volume>>>()
     private val lockByClientIdAssetId = ConcurrentHashMap<String, Any>()
     private val cumulativeVolumeByTradeVolume = ConcurrentHashMap<String, BigDecimal>()
 
@@ -47,7 +49,10 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
         cleanCache()
 
         LOGGER.info("Trade volumes after initial cleaning cache: " +
-                "${tradeVolumesByClientIdByAssetId.flatMap { it.value }.size}")
+                "${tradeVolumesByClientIdByAssetId
+                        .map { it.value }
+                        .flatMap { it.values }
+                        .size}")
     }
 
     override fun add(eventSequenceNumber: Long,
@@ -56,29 +61,65 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
                      assetId: String,
                      volume: BigDecimal,
                      timestamp: Date): List<Pair<Long, BigDecimal>> {
-        val clientIdAssetId = getClientVolumesKey(clientId, assetId)
-        synchronized(getLock(clientIdAssetId)) {
-            val volumes = getVolumes(clientIdAssetId)
+        val lockKey = getLockKey(clientId, assetId)
+        synchronized(getLock(lockKey)) {
+            val volumes = getVolumes(clientId, assetId)
             val volumeToAdd = Volume(eventSequenceNumber, tradeIdx, timestamp, volume, clientId, assetId)
             volumes.add(volumeToAdd)
             cumulativeVolumeByTradeVolume[getVolumeKey(volumeToAdd)] = getCumulativeVolumeForTradeVolume(volumeToAdd, volumes)
+            updateCumulativeVolumes(volumeToAdd, volumes)
 
             return getTradeVolumesForPeriod(volumeToAdd, volumes)
         }
     }
 
+    override fun getTradeVolumeForLastPeriod(clientId: String, assetId: String): ClientTradeVolume? {
+        synchronized(getLock(getLockKey(clientId, assetId))) {
+            val tradeVolumes = tradeVolumesByClientIdByAssetId[clientId]?.get(assetId)
+            val theMostRecentTradeVolume = tradeVolumes?.first() ?: return null
+
+            if (!isVolumeFromLastPeriod(theMostRecentTradeVolume)) {
+                return null
+            }
+
+            val tradeVolumesForPeriod = getTradeVolumesForPeriod(theMostRecentTradeVolume, tradeVolumes)
+            if (tradeVolumesForPeriod.isEmpty()) {
+                return null
+            }
+
+            return ClientTradeVolume(clientId, assetId, tradeVolumesForPeriod.single().second, Date(tradeVolumesForPeriod.single().first))
+        }
+    }
+
+    override fun getTradeVolumesForLastPeriod(clientId: String): List<ClientTradeVolume> {
+        val result = ArrayList<ClientTradeVolume>()
+        tradeVolumesByClientIdByAssetId[clientId]?.keys?.forEach {assetId ->
+            val tradeVolumeForLastPeriod = getTradeVolumeForLastPeriod(clientId, assetId)
+            if (tradeVolumeForLastPeriod != null) {
+                result.add(tradeVolumeForLastPeriod)
+            }
+        }
+
+        return result
+    }
+
     @Scheduled(fixedRateString = "#{Config.tradeVolumeConfig.tradeVolumeCacheConfig.cleanCacheInterval}")
     private fun cleanCache() {
-        tradeVolumesByClientIdByAssetId.forEach { clientIdAssetId, volumes ->
-            synchronized(getLock(clientIdAssetId)) {
-                removeOldVolumes(volumes)
-                if (volumes.isEmpty()) {
-                    tradeVolumesByClientIdByAssetId.remove(clientIdAssetId)
-                    lockByClientIdAssetId.remove(clientIdAssetId)
+        tradeVolumesByClientIdByAssetId.forEach { clientId, volumesByAssetId ->
+            volumesByAssetId.forEach { assetId, volumes ->
+                val lockKey = getLockKey(clientId, assetId)
+                synchronized(getLock(lockKey)) {
+                    removeOldVolumes(volumes)
+                    if (volumes.isEmpty()) {
+                        volumesByAssetId.remove(assetId)
+                        lockByClientIdAssetId.remove(lockKey)
+                    }
                 }
             }
         }
-        LOGGER.debug("Trade volumes after cleaning cache: ${tradeVolumesByClientIdByAssetId.flatMap { it.value }.size}")
+        LOGGER.debug("Trade volumes after cleaning cache: ${tradeVolumesByClientIdByAssetId
+                .map { it.value }
+                .flatMap { it.values }.size}")
     }
 
     private fun removeOldVolumes(volumes: NavigableSet<Volume>) {
@@ -112,8 +153,6 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
     private fun getTradeVolumesForPeriod(volume: Volume, volumes: NavigableSet<Volume>): List<Pair<Long, BigDecimal>> {
         val result = ArrayList<Pair<Long, BigDecimal>>()
         val volumesIterator = volumes.iterator()
-
-        updateCumulativeVolumes(volume, volumes)
 
         while (volumesIterator.hasNext()) {
             val currentVolume = volumesIterator.next()
@@ -156,13 +195,18 @@ class TradeVolumeCacheImpl(@Value("#{Config.tradeVolumeConfig.tradeVolumeCacheCo
         return "${volume.eventSequenceNumber}_${volume.tradeIdx}_${volume.timestamp.time}_${volume.clientId}_${volume.assetId}"
     }
 
-    private fun getClientVolumesKey(clientId: String, assetId: String): String {
+    private fun getLockKey(clientId: String, assetId: String): String {
         return "${clientId}_$assetId"
     }
 
-    private fun getVolumes(clientIdAssetId: String): NavigableSet<Volume> {
+    private fun getVolumes(clientId: String, assetId: String): NavigableSet<Volume> {
         return tradeVolumesByClientIdByAssetId
-                .getOrPut(clientIdAssetId) { TreeSet() }
+                .getOrPut(clientId) { ConcurrentHashMap() }
+                .getOrPut(assetId) { TreeSet() }
+    }
+
+    private fun isVolumeFromLastPeriod(volume: Volume): Boolean {
+        return Date().time - cacheConfig.volumePeriod < volume.timestamp.time
     }
 
     private data class Volume(val eventSequenceNumber: Long,

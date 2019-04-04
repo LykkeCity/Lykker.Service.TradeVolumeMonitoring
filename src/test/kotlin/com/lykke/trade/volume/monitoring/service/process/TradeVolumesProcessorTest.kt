@@ -6,6 +6,7 @@ import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
 import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.entity.ClientTradeVolume
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
@@ -119,6 +120,13 @@ class TradeVolumesProcessorTest {
     }
 
     private class TradeVolumeCacheStub : TradeVolumeCache {
+        override fun getTradeVolumeForLastPeriod(clientId: String, assetId: String): ClientTradeVolume? {
+            return null
+        }
+
+        override fun getTradeVolumesForLastPeriod(clientId: String): List<ClientTradeVolume> {
+            return emptyList()
+        }
 
         val tradeVolumes = mutableListOf<CachedVolume>()
 
