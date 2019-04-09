@@ -1,12 +1,10 @@
 package com.lykke.trade.volume.monitoring.service.process.impl
 
-import com.lykke.client.accounts.ClientAccountsCache
-import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
-import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
+import com.lykke.trade.volume.monitoring.service.entity.EventPersistenceData
+import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
+import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.entity.TradeVolumePersistenceData
-import com.lykke.trade.volume.monitoring.service.exception.ApplicationException
 import com.lykke.trade.volume.monitoring.service.notification.NotificationService
 import com.lykke.trade.volume.monitoring.service.persistence.PersistenceManager
 import com.lykke.trade.volume.monitoring.service.process.AssetVolumeConverter
@@ -22,8 +20,7 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
                                 private val persistenceManager: PersistenceManager,
                                 private val tradeVolumeCache: TradeVolumeCache,
                                 private val maxVolume: BigDecimal,
-                                private val notificationService: NotificationService,
-                                private val clientAccountsCache: ClientAccountsCache) : TradeVolumesProcessor {
+                                private val notificationService: NotificationService) : TradeVolumesProcessor {
 
     companion object {
         private val LOGGER = EventProcessLoggerFactory.getLogger(TradeVolumesProcessorImpl::class.java.name)
@@ -61,9 +58,6 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
     }
 
     private fun processTradeVolume(eventSequenceNumber: Long, tradeVolume: TradeVolume): TradeVolumePersistenceData {
-        val clientId = clientAccountsCache.getClientByWalletId(tradeVolume.walletId)
-                ?: throw ApplicationException("Can not find client by wallet: ${tradeVolume.walletId}")
-
         val targetAssetVolume = if (tradeVolume.assetId == targetAssetId)
             tradeVolume.volume
         else
@@ -71,17 +65,17 @@ class TradeVolumesProcessorImpl(private val targetAssetId: String,
 
         val volumesForThePeriod = tradeVolumeCache.add(eventSequenceNumber,
                 tradeVolume.tradeIdx,
-                clientId,
+                tradeVolume.clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,
                 tradeVolume.timestamp)
-        LOGGER.info(eventSequenceNumber, "Processed trade volume ($tradeVolume), clientId: $clientId, targetAsset: $targetAssetId, " +
+        LOGGER.info(eventSequenceNumber, "Processed trade volume ($tradeVolume), targetAsset: $targetAssetId, " +
                 "targetAssetVolume: $targetAssetVolume")
 
-        sendMailNotificationsIfNeeded(eventSequenceNumber, clientId, tradeVolume.assetId, volumesForThePeriod)
+        sendMailNotificationsIfNeeded(eventSequenceNumber, tradeVolume.clientId, tradeVolume.assetId, volumesForThePeriod)
 
         return TradeVolumePersistenceData(tradeVolume.tradeIdx,
-                clientId,
+                tradeVolume.clientId,
                 tradeVolume.assetId,
                 targetAssetVolume,
                 tradeVolume.timestamp)

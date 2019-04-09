@@ -9,13 +9,13 @@ import com.lykke.trade.volume.monitoring.service.cache.AssetsCache
 import com.lykke.trade.volume.monitoring.service.cache.CacheUpdater
 import com.lykke.trade.volume.monitoring.service.cache.DataCache
 import com.lykke.trade.volume.monitoring.service.cache.PricesCache
+import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.cache.impl.AssetPairsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.AssetsCacheImpl
 import com.lykke.trade.volume.monitoring.service.cache.impl.PricesCacheImpl
 import com.lykke.trade.volume.monitoring.service.config.Config
 import com.lykke.trade.volume.monitoring.service.entity.AssetDictionarySource
 import com.lykke.trade.volume.monitoring.service.entity.EventTradeVolumesWrapper
-import com.lykke.trade.volume.monitoring.service.cache.TradeVolumeCache
 import com.lykke.trade.volume.monitoring.service.holder.AssetPairsHolder
 import com.lykke.trade.volume.monitoring.service.holder.AssetsHolder
 import com.lykke.trade.volume.monitoring.service.holder.PricesHolder
@@ -68,14 +68,14 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
     @Bean
     fun applicationThreadPool(@Value("\${concurrent.application.pool.core.size}") corePoolSize: Int,
-                             @Value("\${concurrent.application.pool.max.size}") maxPoolSize: Int): TaskExecutor {
+                              @Value("\${concurrent.application.pool.max.size}") maxPoolSize: Int): TaskExecutor {
         return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(corePoolSize,
                 maxPoolSize,
                 60L,
                 TimeUnit.SECONDS,
                 SynchronousQueue<Runnable>(),
                 "application-pool-thread-%d"))
-     }
+    }
 
     @Bean
     fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
@@ -192,8 +192,9 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     @Bean
-    fun executionEventProcessor(): ExecutionEventProcessor {
-        return ProtoExecutionEventProcessor()
+    fun executionEventProcessor(clientAccountsCache: ClientAccountsCache, config: Config): ExecutionEventProcessor {
+        return ProtoExecutionEventProcessor(clientAccountsCache, config.tradeVolumeConfig.ignoredClientIds
+                ?: emptySet())
     }
 
     @Bean(initMethod = "init")
@@ -219,8 +220,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
                 persistenceManager,
                 tradeVolumeCache,
                 config.tradeVolumeConfig.maxVolume,
-                notificationService,
-                clientAccountsCache)
+                notificationService)
     }
 
     @Bean

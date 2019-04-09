@@ -1,6 +1,7 @@
 package com.lykke.trade.volume.monitoring.service.process
 
 import com.google.protobuf.Timestamp
+import com.lykke.client.accounts.ClientAccountsCache
 import com.lykke.matching.engine.messages.outgoing.OutgoingMessages
 import com.lykke.me.subscriber.incoming.events.proto.ProtoExecutionEvent
 import com.lykke.trade.volume.monitoring.service.assertEquals
@@ -8,6 +9,7 @@ import com.lykke.trade.volume.monitoring.service.entity.TradeVolume
 import com.lykke.trade.volume.monitoring.service.process.impl.ProtoExecutionEventProcessor
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito
 import java.math.BigDecimal
 import java.util.Date
 import kotlin.test.assertEquals
@@ -19,7 +21,14 @@ class ExecutionEventProcessorTest {
 
     @Before
     fun setUp() {
-        processor = ProtoExecutionEventProcessor()
+        val clientAccountsCache = Mockito.mock(ClientAccountsCache::class.java)
+        Mockito.`when`(clientAccountsCache.getClientByWalletId("Wallet1"))
+                .thenReturn("Client1")
+        Mockito.`when`(clientAccountsCache.getClientByWalletId("Wallet2"))
+                .thenReturn("Client2")
+        Mockito.`when`(clientAccountsCache.getClientByWalletId("IgnoredWallet"))
+                .thenReturn("IgnoredClient")
+        processor = ProtoExecutionEventProcessor(clientAccountsCache, setOf("IgnoredClient"))
     }
 
     @Test
@@ -31,26 +40,27 @@ class ExecutionEventProcessorTest {
         assertEquals(6, result.tradeVolumes.size)
 
         // trade 1
-        assertTradeVolume(TradeVolume(0, "Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1", "Client1",
                 "Asset1", BigDecimal("1.01"), now), result.tradeVolumes[0])
-        assertTradeVolume(TradeVolume(0, "Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1", "Client1",
                 "Asset2", BigDecimal("11.111"), now), result.tradeVolumes[1])
 
         // trade 2
-        assertTradeVolume(TradeVolume(0, "Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1", "Client1",
                 "Asset1", BigDecimal("2"), now), result.tradeVolumes[2])
-        assertTradeVolume(TradeVolume(0, "Wallet1",
+        assertTradeVolume(TradeVolume(0, "Wallet1", "Client1",
                 "Asset2", BigDecimal("3"), now), result.tradeVolumes[3])
 
         // trade 3
-        assertTradeVolume(TradeVolume(0, "Wallet2",
+        assertTradeVolume(TradeVolume(0, "Wallet2", "Client2",
                 "Asset1", BigDecimal("100"), now), result.tradeVolumes[4])
-        assertTradeVolume(TradeVolume(0, "Wallet2",
+        assertTradeVolume(TradeVolume(0, "Wallet2", "Client2",
                 "Asset3", BigDecimal("100.01"), now), result.tradeVolumes[5])
     }
 
     private fun assertTradeVolume(expected: TradeVolume, actual: TradeVolume) {
         assertEquals(expected.walletId, actual.walletId)
+        assertEquals(expected.clientId, actual.clientId)
         assertEquals(expected.assetId, actual.assetId)
         assertEquals(expected.volume, actual.volume)
         assertEquals(expected.timestamp, actual.timestamp)
@@ -70,6 +80,14 @@ class ExecutionEventProcessorTest {
 
         builder.addOrders(buildProtoOrder("Wallet2", listOf(
                 Trade("Asset1", "100", "Asset3", "100.01", now)
+        )))
+
+        builder.addOrders(buildProtoOrder("IgnoredWallet", listOf(
+                Trade("Asset1", "1", "Asset3", "1", now)
+        )))
+
+        builder.addOrders(buildProtoOrder("UnknownWallet", listOf(
+                Trade("Asset1", "1", "Asset3", "1", now)
         )))
 
         builder.addOrders(buildProtoOrder("Wallet2", emptyList()))
