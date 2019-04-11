@@ -150,6 +150,18 @@ compileKotlin {
     }
 }
 
+bootJar {
+    if (project.hasProperty('teamcity')) {
+        manifest {
+            attributes 'Revision-number': teamcity['build.vcs.number'], 'Build-number': teamcity['build.number'], 'Version': version + '.' + teamcity['build.number']
+        }
+    } else {
+        manifest {
+            attributes 'Revision-number': 'localBuild', 'Build-number': 'localBuild', 'Version': version + '.000'
+        }
+    }
+}
+
 bootDistZip {
     archiveName "${project.name}-${project.version}.zip"
     into("${project.name}-${project.version}.zip") {
