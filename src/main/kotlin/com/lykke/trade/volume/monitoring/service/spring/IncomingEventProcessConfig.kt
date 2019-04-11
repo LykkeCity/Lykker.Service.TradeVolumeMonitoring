@@ -51,10 +51,13 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.config.ConstructorArgumentValues
+import org.springframework.beans.factory.config.RuntimeBeanReference
 import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.beans.factory.support.RootBeanDefinition
+import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor
@@ -64,7 +67,13 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.TimeUnit
 
 @Configuration
-class IncomingEventProcessConfig : BeanFactoryPostProcessor {
+class IncomingEventProcessConfig : BeanFactoryPostProcessor, EnvironmentAware {
+
+    private lateinit var environment: Environment
+
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
+    }
 
     @Bean
     fun applicationThreadPool(@Value("\${concurrent.application.pool.core.size}") corePoolSize: Int,
@@ -233,7 +242,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
     }
 
     override fun postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory) {
-        val threadsNumber = beanFactory.getBean(Config::class.java).tradeVolumeConfig.threadsNumber
+        val threadsNumber = ConfigFactory.getConfig(environment).tradeVolumeConfig.threadsNumber
         if (threadsNumber <= 0) {
             throw IllegalStateException("configuration value 'threadsNumber' must be positive, actual value: $threadsNumber")
         }
@@ -253,7 +262,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
-        constructorArgumentValues.addIndexedArgumentValue(1, factory.getBean("incomingEventProcessThreadPool"))
+        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference("incomingEventProcessThreadPool"))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("executionEventListener$index", beanDefinition)
@@ -271,7 +280,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
-        constructorArgumentValues.addIndexedArgumentValue(1, factory.getBean("incomingEventProcessThreadPool"))
+        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference("incomingEventProcessThreadPool"))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("tradeVolumesListener$index", beanDefinition)
