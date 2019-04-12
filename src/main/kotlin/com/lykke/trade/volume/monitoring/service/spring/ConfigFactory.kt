@@ -14,6 +14,7 @@ class ConfigFactory(private val environment: Environment) : FactoryBean<Config> 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(ConfigFactory::class.java.name)
         private const val LOCAL_CONFIG_PROFILE = "local_config"
+        private const val LOCAL_CONFIG_URL = "local"
         private var config: Config? = null
 
         @Synchronized
@@ -26,7 +27,7 @@ class ConfigFactory(private val environment: Environment) : FactoryBean<Config> 
 
         private fun getConfigUrl(environment: Environment): String {
             return if (environment.acceptsProfiles(Profiles.of(LOCAL_CONFIG_PROFILE)))
-                "local"
+                LOCAL_CONFIG_URL
             else {
                 val commandLineArgs = environment.getProperty("nonOptionArgs", Array<String>::class.java)
                 if (commandLineArgs == null) {
