@@ -69,6 +69,10 @@ import java.util.concurrent.TimeUnit
 @Configuration
 class IncomingEventProcessConfig : BeanFactoryPostProcessor, EnvironmentAware {
 
+    companion object {
+        private const val THREAD_POOL_BEAN_NAME = "incomingEventProcessThreadPool"
+    }
+
     private lateinit var environment: Environment
 
     override fun setEnvironment(environment: Environment) {
@@ -86,7 +90,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor, EnvironmentAware {
                 "application-pool-thread-%d"))
     }
 
-    @Bean
+    @Bean(name = [THREAD_POOL_BEAN_NAME])
     fun incomingEventProcessThreadPool(config: Config): TaskExecutor {
         val size = config.tradeVolumeConfig.threadsNumber * 2
         return ConcurrentTaskExecutor(ThreadPoolExecutorWithLogExceptionSupport(size,
@@ -262,7 +266,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor, EnvironmentAware {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
-        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference("incomingEventProcessThreadPool"))
+        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference(THREAD_POOL_BEAN_NAME))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("executionEventListener$index", beanDefinition)
@@ -280,7 +284,7 @@ class IncomingEventProcessConfig : BeanFactoryPostProcessor, EnvironmentAware {
 
         val constructorArgumentValues = ConstructorArgumentValues()
         constructorArgumentValues.addIndexedArgumentValue(0, index)
-        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference("incomingEventProcessThreadPool"))
+        constructorArgumentValues.addIndexedArgumentValue(1, RuntimeBeanReference(THREAD_POOL_BEAN_NAME))
 
         beanDefinition.constructorArgumentValues = constructorArgumentValues
         factory.registerBeanDefinition("tradeVolumesListener$index", beanDefinition)
